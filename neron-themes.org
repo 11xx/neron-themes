@@ -1,127 +1,426 @@
 # [2026-03-02 Mon 10:01:18 -03] @ak
 
-* Neron Themes
-:PROPERTIES:
-:header-args:emacs-lisp: :tangle themes/neron-build.el
-:END:
-
-Theme-specific builders
-
-=cd= into directory where both =neron-gen.el= and =neron-build.el= are and
-build with
-: emacs -Q --script neron-build.el
-for
-: (neron-generate-theme 'dark neron-dark-colors neron-dark-overrides)
-: (neron-generate-theme 'light neron-light-colors neron-light-overrides)
-
-it generates =neron-dark-theme.el= and =neron-light-theme.el=.
-
-#+begin_src emacs-lisp
-(require 'neron-gen (expand-file-name "neron-gen.el"))
-
-(defconst neron-dark-colors
-  '((bg-primary      "#222222" "unspecified" "unspecified")
-    (bg-secondary    "#27282c" "unspecified" "unspecified")
-    (bg-hl           "#2f2f2f" "unspecified" "blue")
-
-    (fg-primary      "#a6a8a9" "unspecified" "white")
-    (fg-secondary    "#cccccc" "unspecified" "gray")
-    (fg-muted        "#707070" "unspecified" "gray")
-
-    (accent-blue     "#69aaff" "#5fafff" "blue")
-    (accent-cyan     "#00bbb7" "#00afaf" "cyan")
-    (accent-green    "#61bd09" "#5faf00" "green")
-    (accent-magenta  "#ff77cf" "#ff87d7" "magenta")
-    (accent-orange   "#fd892c" "#ff8700" "red")
-    (accent-purple   "#a89bff" "#afafff" "magenta")
-    (accent-red      "#f88785" "#ff8787" "red")
-    (accent-warning  "#d2a022" "#d7af00" "red")
-    (accent-yellow   "#b8aa07" "#afaf00" "yellow")
-
-    (bg-diff-added   "#152615" "#005f00" "green")
-    (bg-diff-removed "#301d1e" "#5f0000" "red")
-    (bg-diff-header  "#092147" "blue" "blue")
-    (border          "#404047" "#444444" "brightblack")
-    (cursor          "#4455bb" "#5f5faf" "blue")
-    (comment         "#bda38e" "#afaf87" "yellow"))
-  "Palette for neron-dark.")
-
-(defconst neron-dark-overrides
-  '((match :foreground "white" :background bg-hl
-           :weight bold :slant i
-           :box (:line-width 1 :color border)
-           :underline (:style line :position -5))
-    (isearch-fail :background "red" :foreground "white" :inherit match)
-    (vertico-current :foreground "white" :background bg-hl
-                     :weight bold :slant o :extend t)
-    (dired-efap-face :foreground "white"
-                     :box (:line-width 2 :color border :style pressed-button))
-    (show-paren-match :foreground "white" :weight extra-bold)
-    (button :foreground "white" :weight semi-bold
-            :underline (:color bg-hl :style double-line)))
-  "Face overrides for neron-dark.")
-
-(defconst neron-light-colors
-  '((bg-primary      "#ffffff" "unspecified" "unspecified")
-    (bg-secondary    "#f6f6f6" "unspecified" "unspecified")
-    (bg-hl           "#fdf6df" "unspecified" "blue") ; highlights/selection
-
-    (fg-primary      "#545e62" "unspecified" "white")
-    (fg-secondary    "#cccccc" "unspecified" "gray")
-    (fg-muted        "#868787" "unspecified" "gray") ; comments, weak
-
-    (accent-blue     "#0353c6" "#5fafff" "blue")
-    (accent-cyan     "#006861" "#00afaf" "cyan")
-    (accent-green    "#316900" "#5faf00" "green")
-    (accent-orange   "#964505" "#ff8700" "red")
-    (accent-magenta  "#b30071" "#ff87d7" "magenta")
-    (accent-purple   "#4d2eff" "#afafff" "magenta")
-    (accent-red      "#ba0d0d" "#ff8787" "red")
-    (accent-warning  "#7a5524" "#d7af00" "red")
-    (accent-yellow   "#615f0b" "#afaf00" "yellow")
-    ;; misc/other
-    (bg-diff-added   "#d5ffd5" "#005f00" "green")
-    (bg-diff-removed "#ffd4d4" "#5f0000" "red")
-    (bg-diff-header  "pale turquoise" "blue" "blue")
-    (border          "light gray" "#444444" "brightblack")
-    (cursor          "#3d51c2" "#5f5faf" "blue")
-    (comment         "#a0a1a7" "#afaf87" "yellow"))
-  "Palette for neron-light.")
-
-(defconst neron-light-overrides
-  '((match :foreground "black" :background bg-hl
-           :weight bold :slant i
-           :box (:line-width 1 :color border)
-           :underline (:style line :position -5))
-    (isearch-fail :background "red" :foreground "black" :inherit match)
-    (vertico-current :foreground "black" :background bg-hl
-                     :weight bold :slant o :extend t)
-    (dired-efap-face :foreground "black"
-                     :box (:line-width 2 :color border :style pressed-button))
-    (show-paren-match :foreground "black" :weight extra-bold)
-    (button :foreground "black" :weight semi-bold
-            :underline (:color bg-hl :style double-line)))
-  "Face overrides for neron-light.")
-
-(neron-generate-theme 'dark neron-dark-colors neron-dark-overrides)
-(neron-generate-theme 'light neron-light-colors neron-light-overrides)
-#+end_src
-
 * Neron Theme Generator
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle themes/neron-gen.el
+:header-args:emacs-lisp: :tangle themes/neron-themes-generator.el
 :END:
 
-# v2
+# v3
 #+begin_src emacs-lisp
 ;;; neron-gen.el --- Neron Theme Generator -*- lexical-binding: t; -*-
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'pp)
 
+;;; Utilities: color conversions (hex -> rgb -> xterm-256 index / "colorNN")
+(defun neron--hex-to-rgb (hex)
+  (let ((h (replace-regexp-in-string "^#" "" hex)))
+    (list (string-to-number (substring h 0 2) 16)
+          (string-to-number (substring h 2 4) 16)
+          (string-to-number (substring h 4 6) 16))))
+
+(defun neron--sq-dist (a b)
+  (let ((dr (- (nth 0 a) (nth 0 b)))
+        (dg (- (nth 1 a) (nth 1 b)))
+        (db (- (nth 2 a) (nth 2 b))))
+    (+ (* dr dr) (* dg dg) (* db db))))
+
+(defconst neron--xterm-6cube-levels [0 95 135 175 215 255])
+
+(defun neron--rgb-to-xterm-index (r g b)
+  "Return nearest xterm-256 index for RGB (0-255 each)."
+  (let ((best-idx nil)
+        (best-d most-positive-fixnum))
+    ;; 6x6x6 cube (indices 16..231)
+    (dotimes (rr 6)
+      (dotimes (gg 6)
+        (dotimes (bb 6)
+          (let* ((cr (aref neron--xterm-6cube-levels rr))
+                 (cg (aref neron--xterm-6cube-levels gg))
+                 (cb (aref neron--xterm-6cube-levels bb))
+                 (idx (+ 16 (* 36 rr) (* 6 gg) bb))
+                 (d (neron--sq-dist (list r g b) (list cr cg cb))))
+            (when (< d best-d)
+              (setq best-d d)
+              (setq best-idx idx))))))
+    ;; grayscale ramp 232..255
+    (let ((gval (round (/ (+ r g b) 3.0))))
+      (dotimes (k 24)
+        (let* ((level (+ 8 (* k 10))) ;; approx ramp values
+               (idx (+ 232 k))
+               (d (neron--sq-dist (list gval gval gval) (list level level level))))
+          (when (< d best-d)
+            (setq best-d d)
+            (setq best-idx idx)))))
+    best-idx))
+
+(defun neron--hex-to-xterm-color-name (hex)
+  "Convert #rrggbb to an Emacs 256-color name string like \"color196\"."
+  (let* ((rgb (neron--hex-to-rgb hex))
+         (idx (apply #'neron--rgb-to-xterm-index rgb)))
+    (format "color%d" idx)))
+
+;;; Basic 16 color palette map and nearest matcher for tty fallback
+(defconst neron--basic16
+  '(("black"   . "#000000")
+    ("red"     . "#cd0000")
+    ("green"   . "#00cd00")
+    ("yellow"  . "#cdcd00")
+    ("blue"    . "#0000ee")
+    ("magenta" . "#cd00cd")
+    ("cyan"    . "#00cdcd")
+    ("white"   . "#e5e5e5")
+    ("brightblack" . "#7f7f7f")
+    ("brightred"   . "#ff0000")
+    ("brightgreen" . "#00ff00")
+    ("brightyellow". "#ffff00")
+    ("brightblue"  . "#5c5cff")
+    ("brightmagenta". "#ff00ff")
+    ("brightcyan"  . "#00ffff")
+    ("brightwhite" . "#ffffff")))
+
+(defun neron--nearest-basic16 (hex)
+  "Return the name (string) of the nearest 16-color for HEX."
+  (let* ((rgb (neron--hex-to-rgb hex))
+         (best nil) (best-d most-positive-fixnum))
+    (dolist (entry neron--basic16)
+      (let* ((name (car entry))
+             (h (cdr entry))
+             (d (neron--sq-dist rgb (neron--hex-to-rgb h))))
+        (when (< d best-d)
+          (setq best-d d)
+          (setq best name))))
+    best))
+
+;;; Palette canonicalizer
+;; Accepts palettes of the form:
+;; '((name hex &optional alt256 tty) ...)
+;; and returns alist: ((name . (:gui <hex> :256 <colorNN> :tty <ttyname>)) ...)
+(defun neron--build-color-map (palette)
+  "PALETTE entries: (sym gui-hex &optional alt256)."
+  (mapcar
+   (lambda (entry)
+     (let* ((sym   (nth 0 entry))
+            (gui   (nth 1 entry))        ; must be a string "#rrggbb" or "unspecified"
+            (alt256 (nth 2 entry))       ; optional: "#rrggbb" or "colorNN" or nil
+            (gui (and (stringp gui)
+                      (not (string= gui "unspecified"))
+                      gui))
+            (color256
+             (cond
+              ((and (stringp alt256) (string-prefix-p "#" alt256))
+               (neron--hex-to-xterm-color-name alt256))
+              ((and (stringp alt256)
+                    (not (member alt256 '("unspecified" "nil"))))
+               alt256)
+              (gui
+               (neron--hex-to-xterm-color-name gui))
+              (t nil)))
+            (ttyname
+             (cond
+              (gui (neron--nearest-basic16 gui))
+              (t "white"))))
+       (cons sym (list :gui gui :256 color256 :tty ttyname))))
+   palette))
+
+;;; Merge faces (keeps override semantics you already had)
+(defun neron--merge-faces (base overrides)
+  "Return a new alist merging BASE with OVERRIDES (OVERRIDES win)."
+  (if (null overrides)
+      (copy-alist base)
+    (let ((result (copy-alist base)))
+      (dolist (ov overrides)
+        (setf (alist-get (car ov) result nil #'eq) (cdr ov)))
+      result)))
+
+;;; Resolve a single property value for a given display spec.
+;; Value may be:
+;; - symbol (palette key)
+;; - string (literal color or other)
+;; - plist for nested structure (e.g. :box (:line-width 1 :color border))
+;; - a per-display plist like (:gui "#rrggbb" :256 "colorNN" :tty "white") — we accept this too.
+(defun neron--value-for-display (val color-map display-key)
+  "Return a value suitable for DISPLAY-KEY (:gui/:256/:tty) from VAL.
+COLOR-MAP maps palette symbols to plists."
+  (cond
+   ;; direct string -> literal (assume already a color name or hex)
+   ((stringp val) val)
+
+   ;; per-display plist
+   ((and (listp val) (cl-some (lambda (k) (memq k '(:gui :256 :tty))) val))
+    (or (plist-get val display-key)
+        ;; fallback to :gui if missing and display wants :256/tty
+        (when (eq display-key :256) (plist-get val :gui))
+        (when (eq display-key :tty) (or (plist-get val :tty) (plist-get val :gui)))))
+
+   ;; symbol -> lookup in color map
+   ((symbolp val)
+    (let ((entry (assoc val color-map)))
+      (when entry
+        (plist-get (cdr entry) display-key))))
+
+   ;; nested plist (e.g. :box properties): leave for recursive resolution by caller
+   ((listp val) val)
+
+   (t val)))
+
+;;; Recursively resolve plist of face properties for a single display
+(defun neron--resolve-props-for-display (props color-map display-key)
+  "Convert PROPS (a flat plist like (:foreground <v> :background <v> :box <plist> ...))
+into a plist with values resolved for DISPLAY-KEY."
+  (let (out)
+    (while props
+      (let ((k (pop props))
+            (v (pop props)))
+        (cond
+         ;; nested box/underline/other object that itself contains color refs
+         ((and (listp v) (not (cl-some (lambda (x) (memq x '(:gui :256 :tty))) v)))
+          (push k out)
+          (push (neron--resolve-props-for-display (copy-sequence v) color-map display-key) out))
+         (t
+          (push k out)
+          (push (neron--value-for-display v color-map display-key) out)))))
+    (nreverse out)))
+
+;;; Convert a single face entry from your shorthand into custom-theme-set-faces style
+(defun neron--face-entry->theme-spec (face-entry color-map)
+  "Given FACE-ENTRY like (face :foreground fg-primary :background bg-primary ...)
+return a theme-style entry:
+ (face
+   (((min-colors 16777216) (:foreground \"#...\" ...))
+    ((min-colors 256)      (:foreground \"colorNN\" ...))
+    (t                     (:foreground \"white\" ...))))"
+  (let* ((face (car face-entry))
+         (plist (cdr face-entry))
+         ;; For each display we resolve the props
+         (gui-plist  (neron--resolve-props-for-display (copy-sequence plist) color-map :gui))
+         (256-plist  (neron--resolve-props-for-display (copy-sequence plist) color-map :256))
+         (tty-plist  (neron--resolve-props-for-display (copy-sequence plist) color-map :tty)))
+    (list face
+          (list
+           ;; GUI/24-bit
+           (list (list (list 'min-colors 16777216)) gui-plist)
+           ;; 256 colors
+           (list (list (list 'min-colors 256)) 256-plist)
+           ;; tty fallback
+           (list (list t) tty-plist)))))
+
+;;; Build faces list ready to feed into custom-theme-set-faces
+(defun neron--build-faces-for-theme (faces-shorthand color-map)
+  "Return list appropriate for custom-theme-set-faces built from FACES-SHORTHAND.
+FACES-SHORTHAND is list like ((face . (:foreground fg ...)) ...)."
+  (mapcar (lambda (fe) (neron--face-entry->theme-spec fe color-map)) faces-shorthand))
+
+;;; Write theme file (builds actual forms and pretty-prints)
+(defconst neron-gen--substitution-engine
+  "  (let* ((neron--xterm-6cube-levels [0 95 135 175 215 255])
+         (sq-dist
+          (lambda (a b)
+            (let ((dr (- (nth 0 a) (nth 0 b)))
+                  (dg (- (nth 1 a) (nth 1 b)))
+                  (db (- (nth 2 a) (nth 2 b))))
+              (+ (* dr dr) (* dg dg) (* db db)))))
+         (hex-to-rgb
+          (lambda (hex)
+            (let ((h (replace-regexp-in-string \"^#\" \"\" hex)))
+              (list (string-to-number (substring h 0 2) 16)
+                    (string-to-number (substring h 2 4) 16)
+                    (string-to-number (substring h 4 6) 16)))))
+         (rgb-to-xterm-index
+          (lambda (r g b)
+            (let ((best-idx nil) (best-d most-positive-fixnum))
+              (dotimes (rr 6)
+                (dotimes (gg 6)
+                  (dotimes (bb 6)
+                    (let* ((cr (aref neron--xterm-6cube-levels rr))
+                           (cg (aref neron--xterm-6cube-levels gg))
+                           (cb (aref neron--xterm-6cube-levels bb))
+                           (idx (+ 16 (* 36 rr) (* 6 gg) bb))
+                           (d (funcall sq-dist (list r g b) (list cr cg cb))))
+                      (when (< d best-d) (setq best-d d best-idx idx))))))
+              (let ((gval (round (/ (+ r g b) 3.0))))
+                (dotimes (k 24)
+                  (let* ((level (+ 8 (* k 10))) (idx (+ 232 k))
+                         (d (funcall sq-dist (list gval gval gval) (list level level level))))
+                    (when (< d best-d) (setq best-d d best-idx idx)))))
+              best-idx)))
+         (hex-to-xterm-name
+          (lambda (hex)
+            (format \"color%d\" (apply rgb-to-xterm-index (funcall hex-to-rgb hex)))))
+         (basic16
+          '((\"black\" . \"#000000\") (\"red\" . \"#cd0000\") (\"green\" . \"#00cd00\")
+            (\"yellow\" . \"#cdcd00\") (\"blue\" . \"#0000ee\") (\"magenta\" . \"#cd00cd\")
+            (\"cyan\" . \"#00cdcd\") (\"white\" . \"#e5e5e5\") (\"brightblack\" . \"#7f7f7f\")
+            (\"brightred\" . \"#ff0000\") (\"brightgreen\" . \"#00ff00\") (\"brightyellow\" . \"#ffff00\")
+            (\"brightblue\" . \"#5c5cff\") (\"brightmagenta\" . \"#ff00ff\") (\"brightcyan\" . \"#00ffff\")
+            (\"brightwhite\" . \"#ffffff\")))
+         (nearest-basic16
+          (lambda (hex)
+            (let ((rgb (funcall hex-to-rgb hex)) (best nil) (best-d most-positive-fixnum))
+              (dolist (entry basic16 best)
+                (let ((d (funcall sq-dist rgb (funcall hex-to-rgb (cdr entry)))))
+                  (when (< d best-d) (setq best-d d best (car entry))))))))
+         (color-map
+          (mapcar
+           (lambda (entry)
+             (let* ((sym (nth 0 entry)) (gui (nth 1 entry)) (alt256 (nth 2 entry))
+                    (gui (and (stringp gui) (not (string= gui \"unspecified\")) gui))
+                    (c256 (cond
+                           ((and (stringp alt256) (string-prefix-p \"#\" alt256))
+                            (funcall hex-to-xterm-name alt256))
+                           ((and (stringp alt256) (not (member alt256 '(\"unspecified\" \"nil\"))))
+                            alt256)
+                           (gui (funcall hex-to-xterm-name gui))
+                           (t nil)))
+                    (tty (if gui (funcall nearest-basic16 gui) \"white\")))
+               (cons sym (list :gui gui :256 c256 :tty tty))))
+           colors)))
+    (letrec
+        ((resolve
+          (lambda (attrs display-key)
+            (let (result rest)
+              (setq rest attrs)
+              (while rest
+                (let ((key (pop rest)) (val (pop rest)))
+                  (push key result)
+                  (cond
+                   ((eq key :inherit) (push val result))
+                   ((and (listp val) (cl-some (lambda (k) (memq k '(:gui :256 :tty))) val))
+                    (push (or (plist-get val display-key)
+                              (and (eq display-key :256) (plist-get val :gui))
+                              (and (eq display-key :tty) (or (plist-get val :tty) (plist-get val :gui))))
+                          result))
+                   ((symbolp val)
+                    (let ((entry (assoc val color-map)))
+                      (push (if entry (plist-get (cdr entry) display-key) val) result)))
+                   ((and (listp val) (memq key '(:box :underline :overline :strike-through)))
+                    (push (funcall resolve val display-key) result))
+                   (t (push val result)))))
+              (nreverse result)))))
+
+      (apply #'custom-theme-set-faces 'neron-VARIANT
+             (mapcar (lambda (face-spec)
+                       (let ((face  (car face-spec))
+                             (attrs (cdr face-spec)))
+                         `(,face
+                           ((((min-colors 16777216))
+                             ,(funcall resolve attrs :gui))
+                            (((min-colors 256))
+                             ,(funcall resolve attrs :256))
+                            (t
+                             ,(funcall resolve attrs :tty))))))
+                     faces))))\n"
+  "Substitution engine block. VARIANT is replaced at generation time.")
+
+(defun neron-gen--options-block (theme-sym v)
+  "Emit defgroup/defcustom/defvar for variant string V."
+  ;; Configuration Options
+  (progn
+    (insert ";;;; Configuration options:\n\n")
+    (pp `(defgroup ,theme-sym nil
+           ,(format "\"%s\" theme options.\n\nThe theme has to be reloaded after changing anything in this group." theme-sym)
+           :group 'faces)
+        (current-buffer))
+    (insert "\n")
+
+    (pp `(defcustom ,(intern (format "%s-enlarge-headings" theme-sym)) t
+           "Use different font sizes for some headings and titles."
+           :type 'boolean
+           :group ',theme-sym)
+        (current-buffer))
+    (insert "\n")
+
+    (pp `(defcustom ,(intern (format "%s-height-title-1" theme-sym)) 1.3
+           "Font size 130%."
+           :type 'number
+           :group ',theme-sym)
+        (current-buffer))
+    (insert "\n")
+
+    (pp `(defcustom ,(intern (format "%s-height-title-2" theme-sym)) 1.1
+           "Font size 110%."
+           :type 'number
+           :group ',theme-sym)
+        (current-buffer))
+    (insert "\n")
+
+    (pp `(defcustom ,(intern (format "%s-height-title-3" theme-sym)) 1.0
+           "Font size 100%."
+           :type 'number
+           :group ',theme-sym)
+        (current-buffer))
+    (insert "\n")
+
+    (pp `(defcustom ,(intern (format "%s-height-doc-title" theme-sym)) 1.44
+           "Font size 144%."
+           :type 'number
+           :group ',theme-sym)
+        (current-buffer))
+    (insert "\n")
+
+    (pp `(defcustom ,(intern (format "%s-alternate-mode-line-and-minibuffer" theme-sym)) nil
+           "Use less bold and pink in the minibuffer."
+           :type 'boolean
+           :group ',theme-sym)
+        (current-buffer))
+    (insert "\n")))
+
+(defun neron--write-theme-file (variant description palette faces-shorthand &optional output-file)
+  (let* ((v (if (symbolp variant) (symbol-name variant) (format "%s" variant)))
+         (theme-sym (intern (format "neron-%s" v)))
+         (out-file (or output-file (format "neron-%s-theme.el" v)))
+         (colors-str (pp-to-string palette))
+         (faces-str  (pp-to-string faces-shorthand))
+         (engine     (string-replace "VARIANT" v neron-gen--substitution-engine)))
+    (with-temp-buffer
+      (insert (format ";;; %s-theme.el --- Neron %s Theme -*- lexical-binding: t; -*-\n\n"
+                      (symbol-name theme-sym) (capitalize v)))
+      (insert ";;; Commentary:\n;; Auto-generated by neron-gen.el\n\n")
+      (insert ";;; Code:\n\n")
+
+      (pp `(deftheme ,theme-sym ,description) (current-buffer))
+      (insert "\n")
+
+      ;; Configuration options
+      (neron-gen--options-block theme-sym v)
+      (insert "\n")
+
+      ;; Insert the big let block exactly like Dracula
+      (insert "(let ((colors '")
+      (insert colors-str)
+      (insert ")\n\n      (faces '")
+      (insert faces-str)
+      (insert "))\n\n")
+
+      ;; Insert the substitution engine inside the let block
+      (insert engine)
+      (insert ")\n\n")
+
+      (pp `(provide-theme ',theme-sym) (current-buffer))
+      (insert "\n")
+      (insert (format ";;; %s-theme.el ends here\n" (symbol-name theme-sym)))
+
+      (emacs-lisp-mode)
+      (indent-region (point-min) (point-max))
+      (untabify (point-min) (point-max))
+      (write-region (point-min) (point-max) out-file))
+    out-file))
+
+;;; Merges base faces, applies overrides, writes file
+(defun neron-generate-theme (variant palette overrides &optional out-file)
+  "Generate neron-VARIANT theme file from PALETTE and OVERRIDES.
+PALETTE is the simple list like neron-dark-colors.
+OVERRIDES is an alist of shorthand faces. Returns the file path written."
+  (let* ((merged (neron--merge-faces (neron--get-base-faces) overrides))
+         (fname (or out-file (format "neron-%s-theme.el" (symbol-name variant)))))
+    (neron--write-theme-file variant fname palette merged fname)
+    fname))
+
+;;; Base faces (shorthand form you used earlier)
 (defun neron--get-base-faces ()
-  "Return alist of all base face specifications."
+  "Return alist of base face specifications (shorthand plist style)."
   '((default :foreground fg-primary :background bg-primary)
     (cursor :background cursor)
     (region :background bg-hl :extend t :distant-foreground fg-primary)
@@ -294,7 +593,7 @@ it generates =neron-dark-theme.el= and =neron-light-theme.el=.
     (diredfl-dir-heading :inherit font-lock-comment-face :background bg-primary) ;; *Face used for directory headings in Dired buffers.
     (diredfl-file-suffix :foreground accent-orange)                                              ;; *Face used for file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.elc’.
     (diredfl-autofile-name :foreground accent-yellow)                            ;; *Face used in Dired for names of files that are autofile bookmarks.
-    (diredfl-tagged-autofile-name :inherit accent-red)                           ;; *Face used in Dired for names of files that are autofile bookmarks.
+    (diredfl-tagged-autofile-name :foreground accent-red)                           ;; *Face used in Dired for names of files that are autofile bookmarks.
     (diredfl-flag-mark-line :background cursor)                                  ;; *Face used for flagged and marked lines in Dired buffers.
     (diredfl-flag-mark :inherit diredfl-flag-mark-line)                          ;; *Face used for flags and marks (except D) in Dired buffers.
     (diredfl-ignored-file-name :foreground fg-muted :slant i)                    ;; *Face used for ignored file names  in Dired buffers.
@@ -404,143 +703,91 @@ it generates =neron-dark-theme.el= and =neron-light-theme.el=.
     (eros-result-overlay-face :foreground fg-muted :box (:line-width -1 :color border))
     ))
 
-(defun neron--merge-faces (base overrides)
-  (if (not overrides)
-      base
-    (let ((result (copy-alist base)))
-      (dolist (ov overrides)
-        (setf (alist-get (car ov) result) (cdr ov)))
-      result)))
 
-;;; Static chunks — defined as constants to avoid all escaping hell.
+(defconst neron-dark-colors
+  '((bg-primary      "#222222" "unspecified" "unspecified")
+    (bg-secondary    "#27282c" "unspecified" "unspecified")
+    (bg-hl           "#2f2f2f" "unspecified" "blue")
+    (fg-primary      "#a6a8a9" "unspecified" "white")
+    (fg-secondary    "#cccccc" "unspecified" "gray")
+    (fg-muted        "#707070" "unspecified" "gray")
+    (accent-blue     "#69aaff" "#5fafff" "blue")
+    (accent-cyan     "#00bbb7" "#00afaf" "cyan")
+    (accent-green    "#61bd09" "#5faf00" "green")
+    (accent-magenta  "#ff77cf" "#ff87d7" "magenta")
+    (accent-orange   "#fd892c" "#ff8700" "red")
+    (accent-purple   "#a89bff" "#afafff" "magenta")
+    (accent-red      "#f88785" "#ff8787" "red")
+    (accent-warning  "#d2a022" "#d7af00" "red")
+    (accent-yellow   "#b8aa07" "#afaf00" "yellow")
+    (bg-diff-added   "#152615" "#005f00" "green")
+    (bg-diff-removed "#301d1e" "#5f0000" "red")
+    (bg-diff-header  "#092147" "blue" "blue")
+    (border          "#404047" "#444444" "brightblack")
+    (cursor          "#4455bb" "#5f5faf" "blue")
+    (comment         "#bda38e" "#afaf87" "yellow"))
+  "Palette for neron-dark.")
 
-(defconst neron-gen--substitution-engine
-  ;; This block is pasted verbatim into the generated file.
-  ;; VARIANT is substituted via string-replace before inserting.
-  "
-  (letrec
-      ((resolve
-        (lambda (attrs idx)
-          (let (result rest)
-            (setq rest attrs)
-            (while rest
-              (let ((key (pop rest))
-                    (val (pop rest)))
-                (push key result)
-                (cond
-                 ;; :inherit must never be color-substituted
-                 ((eq key :inherit)
-                  (push val result))
-                 ;; Palette symbol → actual color at index IDX
-                 ((and (symbolp val) (assq val colors))
-                  (push (nth idx (assq val colors)) result))
-                 ;; Nested plist (only for :box, :underline, etc.)
-                 ((and (memq key '(:box :underline :overline :strike-through))
-                       (listp val))
-                  (push (funcall resolve val idx) result))
-                 ;; Anything else (literals, keywords, nil, t) → keep
-                 (t
-                  (push val result)))))
-            (nreverse result)))))
+(defconst neron-dark-overrides
+  '((match :foreground "white" :background bg-hl
+           :weight bold :slant i
+           :box (:line-width 1 :color border)
+           :underline (:style line :position -5))
+    (isearch-fail :background "red" :foreground "white" :inherit match)
+    (vertico-current :foreground "white" :background bg-hl
+                     :weight bold :slant o :extend t)
+    (dired-efap-face :foreground "white"
+                     :box (:line-width 2 :color border :style pressed-button))
+    (show-paren-match :foreground "white" :weight extra-bold)
+    (button :foreground "white" :weight semi-bold
+            :underline (:color bg-hl :style double-line)))
+  "Face overrides for neron-dark.")
 
-    (apply #'custom-theme-set-faces 'neron-VARIANT
-           (mapcar (lambda (face-spec)
-                     (let ((face  (car face-spec))
-                           (attrs (cdr face-spec)))
-                       `(,face
-                         ((((min-colors 16777216)) ; graphical / 24-bit
-                           ,(funcall resolve attrs 1))
-                          (((min-colors 256))      ; 256-color terminal
-                           ,(funcall resolve attrs 2))
-                          (t                       ; tty fallback
-                           ,(funcall resolve attrs 3))))))
-                   faces))))\n"
-  "Substitution engine block. VARIANT is replaced at generation time.")
+(defconst neron-light-colors
+  '((bg-primary      "#ffffff" "unspecified" "unspecified")
+    (bg-secondary    "#f6f6f6" "unspecified" "unspecified")
+    (bg-hl           "#fdf6df" "unspecified" "blue")
+    (fg-primary      "#545e62" "unspecified" "white")
+    (fg-secondary    "#cccccc" "unspecified" "gray")
+    (fg-muted        "#868787" "unspecified" "gray")
+    (accent-blue     "#0353c6" "#5fafff" "blue")
+    (accent-cyan     "#006861" "#00afaf" "cyan")
+    (accent-green    "#316900" "#5faf00" "green")
+    (accent-orange   "#964505" "#ff8700" "red")
+    (accent-magenta  "#b30071" "#ff87d7" "magenta")
+    (accent-purple   "#4d2eff" "#afafff" "magenta")
+    (accent-red      "#ba0d0d" "#ff8787" "red")
+    (accent-warning  "#7a5524" "#d7af00" "red")
+    (accent-yellow   "#615f0b" "#afaf00" "yellow")
+    (bg-diff-added   "#d5ffd5" "#005f00" "green")
+    (bg-diff-removed "#ffd4d4" "#5f0000" "red")
+    (bg-diff-header  "pale turquoise" "blue" "blue")
+    (border          "light gray" "#444444" "brightblack")
+    (cursor          "#3d51c2" "#5f5faf" "blue")
+    (comment         "#a0a1a7" "#afaf87" "yellow"))
+  "Palette for neron-light.")
 
-(defun neron-gen--options-block (v)
-  "Emit defgroup/defcustom/defvar for variant string V."
-  (concat
-   (format "(defgroup neron-%s nil\n" v)
-   (format "  \"\\\"neron-%s\\\" theme options.\n" v)
-   "The theme has to be reloaded after changing anything in this group.\"\n"
-   "  :group 'faces)\n\n"
+(defconst neron-light-overrides
+  '((match :foreground "black" :background bg-hl
+           :weight bold :slant i
+           :box (:line-width 1 :color border)
+           :underline (:style line :position -5))
+    (isearch-fail :background "red" :foreground "black" :inherit match)
+    (vertico-current :foreground "black" :background bg-hl
+                     :weight bold :slant o :extend t)
+    (dired-efap-face :foreground "black"
+                     :box (:line-width 2 :color border :style pressed-button))
+    (show-paren-match :foreground "black" :weight extra-bold)
+    (button :foreground "black" :weight semi-bold
+            :underline (:color bg-hl :style double-line)))
+  "Face overrides for neron-light.")
 
-   (format "(defcustom neron-%s-enlarge-headings t\n" v)
-   "  \"Use different font sizes for some headings and titles.\"\n"
-   "  :type 'boolean\n"
-   (format "  :group 'neron-%s)\n\n" v)
+;;; Generate themes (this will write files into current directory)
+;; (defun neron-generate-theme (variant palette overrides &optional out-file)
 
-   (format "(defcustom neron-%s-height-title-1 1.3\n \"Font size 130%%.\"\n :type 'number\n :group 'neron-%s)\n\n" v v)
-   (format "(defcustom neron-%s-height-title-2 1.1\n \"Font size 110%%.\"\n :type 'number\n :group 'neron-%s)\n\n" v v)
-   (format "(defcustom neron-%s-height-title-3 1.0\n \"Font size 100%%.\"\n :type 'number\n :group 'neron-%s)\n\n" v v)
-   (format "(defcustom neron-%s-height-doc-title 1.44\n \"Font size 144%%.\"\n :type 'number\n :group 'neron-%s)\n\n" v v)
-
-   (format "(defcustom neron-%s-alternate-mode-line-and-minibuffer nil\n" v)
-   "  \"Use less bold and pink in the minibuffer.\"\n"
-   "  :type 'boolean\n"
-   (format "  :group 'neron-%s)\n\n" v)))
-
-(defun neron-generate-theme (variant colors overrides &optional output-dir)
-  "Generate a standalone neron-VARIANT-theme.el.
-
-VARIANT is a symbol ('dark or 'light).
-COLORS is the palette alist ((name hex-24bit hex-256 tty) ...).
-OVERRIDES is a face overrides alist or nil.
-OUTPUT-DIR defaults to the directory of this file."
-  (let* ((v        (symbol-name variant))
-         (V        (capitalize v))
-         (out-dir  (or output-dir
-                       (file-name-directory
-                        (or load-file-name buffer-file-name default-directory))))
-         (out-file (expand-file-name (format "neron-%s-theme.el" v) out-dir))
-         (merged   (neron--merge-faces (neron--get-base-faces) overrides))
-         ;; pp-to-string handles all quoting for us — no manual escaping
-         (colors-str (pp-to-string colors))
-         (faces-str  (pp-to-string merged))
-         ;; Substitute the variant name into the engine block
-         (engine   (string-replace "VARIANT" v neron-gen--substitution-engine)))
-
-    (with-temp-file out-file
-      ;; File header
-      (insert (format ";;; neron-%s-theme.el --- Neron %s Theme  -*- lexical-binding: t; -*-\n\n" v V))
-      (insert (format ";; Keywords: theme %s neon neron\n\n" v))
-      (insert ";;; Commentary:\n\n")
-      (insert ";; Generated file — standalone and editable.\n")
-      (insert ";; To regenerate: emacs -Q --script build.el\n\n")
-      (insert ";;; Code:\n\n")
-
-      ;; Theme declaration
-      (insert (format "(deftheme neron-%s)\n\n" v))
-
-      ;; Options
-      (insert ";;;; Configuration options\n\n")
-      (insert (neron-gen--options-block v))
-
-      ;; The let block with colors + faces + inline engine
-      (insert "(let ((colors '")
-      (insert colors-str)
-      (insert ")\n\n      (faces '")
-      (insert faces-str)
-      (insert "))\n")
-      (insert engine)
-
-      ;; Autoload for package distribution
-      (insert ";;;###autoload\n")
-      (insert "(when (and (boundp 'custom-theme-load-path) load-file-name)\n")
-      (insert "  (add-to-list 'custom-theme-load-path\n")
-      (insert "               (file-name-directory load-file-name)))\n\n")
-
-      ;; Footer
-      (insert (format "(provide-theme 'neron-%s)\n" v))
-      (insert (format ";;; neron-%s-theme.el ends here\n" v))
-
-      ;; format buffer
-      (emacs-lisp-mode)
-      (let ((inhibit-message t))        ; optional, keep quiet
-        ;; (indent-region (point-min) (point-max))
-        (untabify (point-min) (point-max))))
-
-    (message "Generated: %s" out-file)))
+(let ((light (neron-generate-theme 'dark neron-dark-colors neron-dark-overrides))
+      (dark (neron-generate-theme 'light neron-light-colors neron-light-overrides)))
+  (message "Generated %s and %s" dark light))
 
 (provide 'neron-gen)
 ;;; neron-gen.el ends here
