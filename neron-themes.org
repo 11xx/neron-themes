@@ -1,6 +1,8 @@
 # [2026-03-02 Mon 10:01:18 -03] @ak
 
-Inspired by [[https://github.com/dracula/emacs/blob/main/dracula-theme.el][Dracula theme's Emacs file]].
+- Dark theme derived from [[https://github.com/ghgofort/vscode-neon-vommit-theme][ghgofort/vscode-neon-vommit-theme]], but with
+  lower contrast.
+- Elisp code inspired by [[https://github.com/dracula/emacs/blob/main/dracula-theme.el][Dracula theme's Emacs file]].
 
 * Theme package
 :PROPERTIES:
