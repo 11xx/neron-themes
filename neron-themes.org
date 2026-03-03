@@ -1,8 +1,41 @@
 # [2026-03-02 Mon 10:01:18 -03] @ak
 
+Inspired by [[https://github.com/dracula/emacs/blob/main/dracula-theme.el][Dracula theme's Emacs file]].
+
+* Theme package
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle neron-themes.el
+:END:
+
+#+begin_src emacs-lisp
+;;; neron-themes.el -*- lexical-binding: t; -*-
+
+;; Author: 11xx
+;; Version: 20260303
+;; Package-Requires: ((emacs "27.1"))
+;; Keywords: neron neon pastel low contrast theme dark light faces
+;; URL: https://github.com/yourname/neron-themes
+;; SPDX-License-Identifier: Unlicense
+
+;;; Commentary:
+;; A neon-pastel 6.66-contrast dark and light theme pair.
+;; Load with: (load-theme 'neron-dark) or (load-theme 'neron-light)
+;; Themes are already pre-generated.
+
+;;; Code:
+
+;;;###autoload
+(when (and (boundp 'custom-theme-load-path) load-file-name)
+  (add-to-list 'custom-theme-load-path
+               (file-name-directory load-file-name)))
+
+(provide 'neron-themes)
+;;; neron-themes.el ends here
+#+end_src
+
 * Neron Theme Generator
 :PROPERTIES:
-:header-args:emacs-lisp: :tangle themes/neron-theme-generator.el
+:header-args:emacs-lisp: :tangle neron-theme-generator.el
 :END:
 
 # v3
