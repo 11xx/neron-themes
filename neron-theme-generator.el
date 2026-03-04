@@ -1,4 +1,12 @@
-;;; neron-theme-generator.el --- Neron Theme Generator -*- lexical-binding: t; -*-
+;;; neron-theme-generator.el --- Neron theme generator -*- lexical-binding: t; -*-
+
+;; URL: https://codeberg.org/11xx/neron-themes
+
+;;; Commentary:
+
+;; Tool for generating neron-dark-theme.el and neron-light-theme.el from a
+;; shared face list. Not required at runtime, the generated files are
+;; self-contained.
 
 ;;; Code:
 
@@ -94,8 +102,8 @@
   (mapcar
    (lambda (entry)
      (let* ((sym   (nth 0 entry))
-            (gui   (nth 1 entry))        ; must be a string "#rrggbb" or "unspecified"
-            (alt256 (nth 2 entry))       ; optional: "#rrggbb" or "colorNN" or nil
+            (gui   (nth 1 entry))  ; must be a string "#rrggbb" or "unspecified"
+            (alt256 (nth 2 entry)) ; optional: "#rrggbb" or "colorNN" or nil
             (gui (and (stringp gui)
                       (not (string= gui "unspecified"))
                       gui))
@@ -580,9 +588,9 @@ OVERRIDES is an alist of shorthand faces. Returns the file path written."
     (diredfl-other-priv :foreground accent-warning)                              ;; *Face used for l,s,S,t,T privilege indicators in Dired buffers.
     (diredfl-write-priv :foreground accent-red)                                  ;; *Face used for write privilege indicator (w) in Dired buffers.
     (diredfl-dir-heading :inherit font-lock-comment-face :background bg-primary) ;; *Face used for directory headings in Dired buffers.
-    (diredfl-file-suffix :foreground accent-orange)                                              ;; *Face used for file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.elc’.
+    (diredfl-file-suffix :foreground accent-orange)                              ;; *Face used for file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.elc’.
     (diredfl-autofile-name :foreground accent-yellow)                            ;; *Face used in Dired for names of files that are autofile bookmarks.
-    (diredfl-tagged-autofile-name :foreground accent-red)                           ;; *Face used in Dired for names of files that are autofile bookmarks.
+    (diredfl-tagged-autofile-name :foreground accent-red)                        ;; *Face used in Dired for names of files that are autofile bookmarks.
     (diredfl-flag-mark-line :background cursor)                                  ;; *Face used for flagged and marked lines in Dired buffers.
     (diredfl-flag-mark :inherit diredfl-flag-mark-line)                          ;; *Face used for flags and marks (except D) in Dired buffers.
     (diredfl-ignored-file-name :foreground fg-muted :slant i)                    ;; *Face used for ignored file names  in Dired buffers.
@@ -773,8 +781,8 @@ OVERRIDES is an alist of shorthand faces. Returns the file path written."
 
 (defun neron-theme--generate-default ()
     "Generate default light and dark themes"
-    (let ((light (neron-theme-generate 'dark neron-dark-colors neron-dark-overrides))
-          (dark (neron-theme-generate 'light neron-light-colors neron-light-overrides)))
+    (let ((dark  (neron-theme-generate 'dark  neron-dark-colors  neron-dark-overrides))
+          (light (neron-theme-generate 'light neron-light-colors neron-light-overrides)))
       (message "Generated %s and %s" dark light)))
 
 (provide 'neron-theme-generator)

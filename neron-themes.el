@@ -1,16 +1,21 @@
-;;; neron-themes.el -*- lexical-binding: t; -*-
+;;; neron-themes.el --- Pair of light/dark neon-pastel themes -*- lexical-binding: t; -*-
 
-;; Author: 11xx
+;; Author: Lucas G <g@11xx.org>
 ;; Version: 20260303
-;; Package-Requires: ((emacs "27.1"))
-;; Keywords: neron neon pastel low contrast theme dark light faces
-;; URL: https://github.com/yourname/neron-themes
+;; Package-Requires: ((emacs "28"))
+;; Keywords: faces, theme, dark, light
+;; URL: https://codeberg.org/11xx/neron-themes
 ;; SPDX-License-Identifier: Unlicense
 
 ;;; Commentary:
-;; A neon-pastel 6.66-contrast dark and light theme pair.
-;; Load with: (load-theme 'neron-dark) or (load-theme 'neron-light)
-;; Themes are already pre-generated.
+
+;; A pair of neon-pastel themes (dark and light).
+;;
+;; The target contrast is 6.66.
+;;
+;; - Dark theme derived from Neon Vommit (https://github.com/ghgofort/vscode-neon-vommit-theme)
+;;   but with lower contrast.
+;; - Light theme inspired by Gnome Terminal's Adwaita light theme.
 
 ;;; Code:
 
