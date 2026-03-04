@@ -11,6 +11,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'cl-extra)
 (require 'pp)
 
 ;;; Utilities: color conversions (hex -> rgb -> xterm-256 index / "colorNN")

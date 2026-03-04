@@ -19,10 +19,8 @@
 
 ;;; Code:
 
-;;;###autoload
-(when (and (boundp 'custom-theme-load-path) load-file-name)
-  (add-to-list 'custom-theme-load-path
-               (file-name-directory load-file-name)))
+(when load-file-name
+  (add-to-list 'custom-theme-load-path (file-name-directory load-file-name)))
 
 (provide 'neron-themes)
 ;;; neron-themes.el ends here
