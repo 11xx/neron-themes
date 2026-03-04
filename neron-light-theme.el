@@ -5,6 +5,9 @@
 
 ;;; Code:
 
+(require 'cl-lib)
+(require 'cl-extra)
+
 (deftheme neron-light "neron-light-theme.el")
 
 ;;;; Configuration options:

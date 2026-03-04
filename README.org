@@ -51,10 +51,9 @@ Example usage with [[https://www.emacswiki.org/emacs/SetupEl][setup.el]] + [[htt
                       :files ("neron-*-theme.el" "neron-themes.el")))
 
 (setup (:elpaca auto-dark)
-  (:load-after neron-themes)
-  (setopt auto-dark-dark-theme 'neron-dark
-          auto-dark-light-theme 'neron-light)
-  (auto-dark-mode t)
+  (setopt auto-dark-themes '((neron-dark)
+                             (neron-light)))
+  (:hook-into elpaca-after-init-hook)
   (:hide-mode))
 #+end_src
 
