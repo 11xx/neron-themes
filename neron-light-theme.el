@@ -10,33 +10,6 @@
 
 (deftheme neron-light "neron-light-theme.el")
 
-;;;; Configuration options:
-
-(defgroup neron-light nil
-  "\"neron-light\" theme options.\n\nThe theme has to be reloaded after changing anything in this group."
-  :group 'faces)
-
-(defcustom neron-light-enlarge-headings t
-  "Use different font sizes for some headings and titles." :type
-  'boolean :group 'neron-light)
-
-(defcustom neron-light-height-title-1 1.3
-  "Font size 130%." :type 'number :group 'neron-light)
-
-(defcustom neron-light-height-title-2 1.1
-  "Font size 110%." :type 'number :group 'neron-light)
-
-(defcustom neron-light-height-title-3 1.0
-  "Font size 100%." :type 'number :group 'neron-light)
-
-(defcustom neron-light-height-doc-title 1.44
-  "Font size 144%." :type 'number :group 'neron-light)
-
-(defcustom neron-light-alternate-mode-line-and-minibuffer nil
-  "Use less bold and pink in the minibuffer." :type 'boolean :group
-  'neron-light)
-
-
 (let ((colors '((bg-primary "#ffffff") (bg-secondary "#f6f6f6") (bg-hl "#fdf6df")
                 (fg-primary "#545e62") (fg-secondary "#cccccc") (fg-muted "#868787")
                 (accent-blue "#0353c6") (accent-cyan "#006861")
@@ -80,13 +53,15 @@
                (font-lock-constant-face :foreground accent-blue)
                (font-lock-doc-face :foreground accent-blue)
                (font-lock-doc-markup-face :foreground accent-purple)
-               (font-lock-function-name-face :foreground accent-green :weight bold)
+               (font-lock-function-name-face :foreground accent-green :weight
+                                             semi-bold)
                (font-lock-keyword-face :foreground accent-magenta)
                (font-lock-negation-char-face :foreground accent-orange :weight bold)
                (font-lock-preprocessor-face :inherit font-lock-builtin-face)
                (font-lock-string-face :foreground accent-purple)
                (font-lock-type-face :foreground accent-cyan)
-               (font-lock-variable-name-face :foreground accent-yellow)
+               (font-lock-variable-name-face :foreground accent-yellow :weight
+                                             semi-bold)
                (font-lock-warning-face :inherit warning)
                (tree-sitter-hl-face:attribute :inherit font-lock-constant-face)
                (tree-sitter-hl-face:comment :inherit font-lock-comment-face)
