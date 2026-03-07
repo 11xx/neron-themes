@@ -2,7 +2,7 @@
 
 ;;; Commentary:
 ;;
-;; A dark theme with neon-pastel accents.
+;; A dark theme with colorful neon-pastel accents.
 ;;
 ;; Target contrast is ~6.66. Originally derived from VSCode's Neon Vommit
 ;; but modified with lower contrast to be easier on the eyes. Depends on
@@ -13,7 +13,7 @@
 (require 'neron-theme-base)
 
 (deftheme neron-dark
-  "A dark theme with neon-pastel accents.")
+  "A dark theme with colorful neon-pastel accents.")
 
 (let ((colors
        '((bg-primary      "#222222")

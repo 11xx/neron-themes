@@ -1,4 +1,4 @@
-;;; neron-themes.el --- Pair of light/dark neon-pastel themes -*- lexical-binding: t; -*-
+;;; neron-themes.el --- Pair of colorful light/dark neon-pastel themes -*- lexical-binding: t; -*-
 
 ;; Author: Lucas G <g@11xx.org>
 ;; Version: 20260304
@@ -9,7 +9,7 @@
 
 ;;; Commentary:
 
-;; A pair of neon-pastel themes (dark and light).
+;; A pair of colorful neon-pastel themes (dark and light).
 ;;
 ;; The target contrast is 6.66.
 ;;

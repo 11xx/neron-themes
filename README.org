@@ -2,18 +2,17 @@
 
 # Created: As package 2026-03-03 (originally from dotfiles 2022-07-07)
 
-A pair of neon-pastel themes for Emacs (dark and light).
+A pair of colorful neon-pastel themes for Emacs (dark and light).
 
 The name "Neron" refers to a interpretation of the number 666 as a
 cipher for "Neron Caesar" in Hebrew gematria/isopsephy.
 
 * Installation
+
 The repository contains pre-generated, standalone theme files. You can
 install directly from git using your preferred package manager.
 
 ** package.el (Emacs 29+)
-If you're on Emacs 29 or newer, you can use the built-in =package-vc-install=:
-
 #+begin_src emacs-lisp
 (unless (package-installed-p 'neron-themes)
   (package-vc-install "https://codeberg.org/11xx/neron-themes"))
@@ -31,6 +30,7 @@ If you're on Emacs 29 or newer, you can use the built-in =package-vc-install=:
 #+end_src
 
 * Usage
+
 The package automatically adds its installation directory to
 =custom-theme-load-path=.
 
@@ -48,7 +48,7 @@ Example usage with [[https://www.emacswiki.org/emacs/SetupEl][setup.el]] + [[htt
 #+begin_src emacs-lisp
 (elpaca (neron-themes :host codeberg
                       :repo "11xx/neron-themes"
-                      :files ("neron-*-theme.el" "neron-themes.el")))
+                      :files ("neron-*.el")))
 
 (setup (:elpaca auto-dark)
   (setopt auto-dark-themes '((neron-dark)
@@ -57,72 +57,84 @@ Example usage with [[https://www.emacswiki.org/emacs/SetupEl][setup.el]] + [[htt
   (:hide-mode))
 #+end_src
 
+* Customization
 
-* Development
-The themes themselves (=neron-dark-theme.el= and =neron-light-theme.el=)
-are generated from a shared base of faces and variable color names. If
-you want to edit them, either change the color scheme/overrides inside
-[[file:neron-theme-generator.el::(defconst neron-dark-colors][neron-theme-generator.el]] and re-generate the theme files with
-#+begin_src shell
-emacs -Q --batch -l neron-theme-generator.el --eval '(neron-theme--generate-default)'
-#+end_src
+The themes use a shared runtime engine (=neron-theme-base.el=) that
+automatically calculates nearest-match 256-color and terminal
+fallbacks from hex values.
 
-or define new custom pallette and face overrides and use the helper
-=(neron-theme-generate)=:
+To edit a theme you can change the palettes and faces (with simplified
+syntax) directly in =neron-*-theme.el=.
+
+** Creating Variants
+To define a new variant, simply create a new file
+(e.g. =neron-myvariant-theme.el=), define a palette and overrides, and
+pass them to =(neron-theme-create)=:
 #+begin_src emacs-lisp
-(defconst my-colors
-  '((bg-primary      "#222222")
-    (bg-secondary    "#27282c")
-    (bg-hl           "#2f2f2f")
+;;; neron-myvariant-theme.el
+(require 'neron-theme-base)
 
-    (fg-primary      "#a6a8a9")
-    (fg-secondary    "#cccccc")
-    (fg-muted        "#707070")
+(deftheme neron-myvariant "My custom Neron variant.")
 
-    (accent-blue     "#69aaff")
-    (accent-cyan     "#00bbb7")
-    (accent-green    "#61bd09")
-    (accent-magenta  "#ff77cf")
-    (accent-orange   "#fd892c")
-    (accent-purple   "#a89bff")
-    (accent-red      "#f88785")
-    (accent-warning  "#d2a022")
-    (accent-yellow   "#b8aa07")
-    ;; misc
-    (bg-diff-added   "#152615")
-    (bg-diff-removed "#301d1e")
-    (bg-diff-header  "#092147")
-    (border          "#404047")
-    (cursor          "#4455bb")
-    (comment         "#bda38e"))
-  "Palette for neron-dark.")
+(let ((my-colors
+       '((bg-primary      "#222222")
+         (bg-secondary    "#27282c")
+         (bg-muted        "#2f2f2f")
+         (fg-primary      "#a6a8a9")
+         (fg-secondary    "#cccccc")
+         (fg-muted        "#707070")
+         (accent-blue     "#69aaff")
+         (accent-cyan     "#00bbb7")
+         (accent-green    "#61bd09")
+         (accent-magenta  "#ff77cf")
+         (accent-orange   "#fd892c")
+         (accent-purple   "#a89bff")
+         (accent-red      "#f88785")
+         (accent-warning  "#d2a022")
+         (accent-yellow   "#b8aa07")
+         ;; misc
+         (bg-diff-added   "#152615")
+         (bg-diff-removed "#301d1e")
+         (bg-diff-header  "#092147")
+         (border          "#404047")
+         (cursor          "#4455bb")
+         (comment         "#bda38e")))
 
-(defconst my-overrides
-  '((match :foreground "white" :background bg-hl
-           :weight bold :slant i
-           :box (:line-width 1 :color border)
-           :underline (:style line :position -5))
-    (isearch-fail :background "red" :foreground "white" :inherit match)
-    (vertico-current :foreground "white" :background bg-hl
-                     :weight bold :slant o :extend t)
-    (dired-efap-face :foreground "white"
-                     :box (:line-width 2 :color border :style pressed-button))
-    (show-paren-match :foreground "white" :weight extra-bold)
-    (button :foreground "white" :weight semi-bold
-            :underline (:color bg-hl :style double-line)))
-  "Face overrides for neron-dark.")
+      (my-overrides
+       '((match :foreground "white" :background bg-muted
+                :weight bold :slant i
+                :box (:line-width 1 :color border)
+                :underline (:style line :position -5))
+         (isearch-fail :background "red" :foreground "white" :inherit match)
+         (vertico-current :foreground "white" :background bg-muted
+                          :weight bold :slant o :extend t)
+         (dired-efap-face :foreground "white"
+                          :box (:line-width 2 :color border :style pressed-button))
+         (show-paren-match :foreground "white" :weight extra-bold)
+         (button :foreground "white" :weight semi-bold
+                 :underline (:color bg-muted :style double-line)))))
 
-(neron-theme-generate 'myvariantname my-colors my-overrides)
+  (neron-theme-create 'neron-myvariant my-colors my-overrides))
+
+(provide-theme 'neron-myvariant)
 #+end_src
-- where
-  + =myvariantname= will generate a theme called
-    =neron-myvariantname-theme.el=.
-  + Theme colors definition should follow variable names as the
-    default faces defined in =(neron-theme--get-base-faces)= all use them.
-  + Also, note the simplified syntax for faces, they will later be
-    expanded to =custom-theme-set-faces= syntax by
-    =(neron-theme--build-faces)=.
 
+Ensure this new file is somewhere in =custom-theme-load-path=.
+
+To create a functional theme, the color palette provided to
+=(neron-theme-create)= must contain an entry for every symbolic color
+used by the default faces in =neron-theme--base-faces= (e.g.,
+=fg-primary=, =accent-blue=, =border=, etc.). These are the colors needed to
+render the base set of ~150 faces correctly.
+
+- Then, the overrides argument can be used to:
+  + Modify existing faces: Change the weight or slant, or point a face
+    to a different color from your palette.
+    * *NOTE*: this overrides the /whole/ face, i.e. default or inherited
+      attributes will be overriden if e.g. only =:foreground= is set.
+  + Customize new faces: Add face definitions not covered by the base.
+  + Bypass the palette: Use a hardcoded hex color for a specific face
+    instead of a symbolic name.
 
 ** The simplified plist faces syntax
 #+begin_src emacs-lisp
@@ -140,7 +152,10 @@ or define new custom pallette and face overrides and use the helper
 - Dark theme derived from [[https://github.com/ghgofort/vscode-neon-vommit-theme][ghgofort/vscode-neon-vommit-theme]], but with
   lower contrast.
 - Light theme inspired by Gnome Terminal's Adwaita light theme.
-- Elisp code style for generated theme inspired by
-  [[https://github.com/dracula/emacs/blob/main/dracula-theme.el][Dracula theme's Emacs file]].
+- Elisp code style inspired by
+  + [[https://github.com/dracula/emacs/blob/main/dracula-theme.el][Dracula theme's Emacs file]]: simplified syntax for maintenance and
+    color degradation/fallback support.
+  + [[https://github.com/rougier/nano-theme][N Λ N O Theme]]: example with shared runtime base and lots of extra
+    customization than just colors.
 
 #+author: 11xx

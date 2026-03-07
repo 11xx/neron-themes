@@ -6,7 +6,7 @@
 :END:
 
 #+begin_src emacs-lisp
-;;; neron-themes.el --- Pair of light/dark neon-pastel themes -*- lexical-binding: t; -*-
+;;; neron-themes.el --- Pair of colorful light/dark neon-pastel themes -*- lexical-binding: t; -*-
 
 ;; Author: Lucas G <g@11xx.org>
 ;; Version: 20260304
@@ -17,7 +17,7 @@
 
 ;;; Commentary:
 
-;; A pair of neon-pastel themes (dark and light).
+;; A pair of colorful neon-pastel themes (dark and light).
 ;;
 ;; The target contrast is 6.66.
 ;;
@@ -52,7 +52,7 @@
 
 ;;; Commentary:
 ;;
-;; A dark theme with neon-pastel accents.
+;; A dark theme with colorful neon-pastel accents.
 ;;
 ;; Target contrast is ~6.66. Originally derived from VSCode's Neon Vommit
 ;; but modified with lower contrast to be easier on the eyes. Depends on
@@ -63,7 +63,7 @@
 (require 'neron-theme-base)
 
 (deftheme neron-dark
-  "A dark theme with neon-pastel accents.")
+  "A dark theme with colorful neon-pastel accents.")
 
 (let ((colors
        '((bg-primary      "#222222")
