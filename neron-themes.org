@@ -196,6 +196,7 @@
 ;;; Code:
 
 (require 'cl-lib)
+(require 'color)
 
 (defconst neron-theme--xterm-6cube-levels [0 95 135 175 215 255]
   "Core Color Math (Calculates 256-color and TTY fallbacks dynamically)")
@@ -282,6 +283,19 @@
        (cons sym (list :gui gui :256 c256 :tty tty))))
    palette))
 
+(defun neron-theme--adjust-color (hex percent)
+  "Adjust HEX lightness by PERCENT. Positive lightens, negative darkens."
+  (let* ((rgb (color-name-to-rgb hex))
+         (hsl (apply #'color-rgb-to-hsl rgb))
+         (h (nth 0 hsl))
+         (s (nth 1 hsl))
+         (l (nth 2 hsl))
+         ;; Adjust lightness. We divide by 100.0 to convert percentage to 0.0-1.0 range.
+         (new-l (max 0.0 (min 1.0 (+ l (/ percent 100.0)))))
+         (new-rgb (color-hsl-to-rgb h s new-l)))
+    ;; The `2` argument ensures we get standard #RRGGBB instead of #RRRRGGGGBBBB
+    (color-rgb-to-hex (nth 0 new-rgb) (nth 1 new-rgb) (nth 2 new-rgb) 2)))
+
 ;;; nested recursive property resolver
 (defun neron-theme--resolve (attrs display-key color-map)
   "Recursively resolve ATTRS for a DISPLAY-KEY (`:gui', `:256', or `:tty') using COLOR-MAP.
@@ -294,6 +308,25 @@ Safely drills down into nested properties like :box or :underline."
         (push key result)
         (cond
          ((eq key :inherit) (push val result))
+
+         ;; Dynamic Color Modifiers DSL `(:darken color-sym percent)'
+         ((and (listp val) (memq (car val) '(:darken :lighten)))
+          (let* ((op (car val))
+                 (color-sym (nth 1 val))
+                 (percent (nth 2 val))
+                 (base-entry (assoc color-sym color-map))
+                 (base-hex (and base-entry (plist-get (cdr base-entry) :gui))))
+            (if (not base-hex)
+                (push color-sym result) ;; Fallback if symbol is missing
+              ;; Calculate new hex: invert percent if darkening
+              (let* ((adj-percent (if (eq op :darken) (- percent) percent))
+                     (new-hex (neron-theme--adjust-color base-hex adj-percent)))
+                ;; Dynamically calculate terminal fallbacks for the NEW hex!
+                (push (cond
+                       ((eq display-key :gui) new-hex)
+                       ((eq display-key :256) (neron-theme--hex-to-xterm-name new-hex))
+                       ((eq display-key :tty) (neron-theme--nearest-basic16 new-hex)))
+                      result)))))
          ((and (listp val) (cl-some (lambda (k) (memq k '(:gui :256 :tty))) val))
           (push (or (plist-get val display-key)
                     (and (eq display-key :256) (plist-get val :gui))
@@ -497,6 +530,13 @@ Safely drills down into nested properties like :box or :underline."
     (diredfl-deletion :inherit diredfl-deletion-file-name)                       ;; *Face used for deletion flags (D) in Dired buffers.
 
     (dired-efap-face :foreground "white" :box (:line-width 2 :color border :style pressed-button))
+
+    (dired-subtree-depth-1-face :background (:darken bg-primary 5))
+    (dired-subtree-depth-2-face :background (:darken bg-primary 10))
+    (dired-subtree-depth-3-face :background (:darken bg-primary 15))
+    (dired-subtree-depth-4-face :background (:darken bg-primary 20))
+    (dired-subtree-depth-5-face :background (:darken bg-primary 25))
+    (dired-subtree-depth-6-face :background (:darken bg-primary 30))
 
     ;; VERSION CONTROL
     (diff-added :background bg-diff-added :foreground accent-green :extend t)
