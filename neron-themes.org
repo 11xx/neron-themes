@@ -390,6 +390,8 @@ Safely drills down into nested properties like :box or :underline."
     (tree-sitter-hl-face:variable.builtin :foreground accent-magenta)
     (tree-sitter-hl-face:variable.parameter :inherit font-lock-variable-name-face :weight normal)
 
+    (haskell-operator-face :inherit default)
+
     ;; other typography
     (shadow :foreground fg-muted)
 
@@ -445,7 +447,7 @@ Safely drills down into nested properties like :box or :underline."
 
     ;; DIRED
     (dired-rainbow-directory-face        :foreground accent-blue)
-    (dired-rainbow-html-face             :foreground accent-red)
+    (dired-rainbow-html-face             :foreground accent-magenta)
     (dired-rainbow-xml-face              :foreground accent-yellow)
     (dired-rainbow-document-face         :foreground accent-purple)
     (dired-rainbow-markdown-face         :foreground accent-magenta)
@@ -468,7 +470,7 @@ Safely drills down into nested properties like :box or :underline."
     (all-the-icons-dired-dir-face :foreground accent-blue)
 
     (diredfl-compressed-file-name :foreground accent-red)                        ;; *Face used for compressed file names.
-    (diredfl-compressed-file-suffix :foregroun fg-muted)                         ;; *Face used for compressed file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.zip’.
+    (diredfl-compressed-file-suffix :inherit diredfl-compressed-file-name :weight bold) ;; *Face used for compressed file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.zip’.
     (diredfl-mode-set-explicitly :inherit default)                               ;; Basic default face.
     (diredfl-number :foreground accent-cyan)                                     ;; *Face used for numerical fields in Dired buffers. In particular, inode number, number of hard links, and file size.
     (diredfl-no-priv :inherit diredfl-mode-set-explicitly)                       ;; *Face used for no privilege indicator (-) in Dired buffers.
@@ -485,7 +487,7 @@ Safely drills down into nested properties like :box or :underline."
     (diredfl-other-priv :foreground accent-warning)                              ;; *Face used for l,s,S,t,T privilege indicators in Dired buffers.
     (diredfl-write-priv :foreground accent-red)                                  ;; *Face used for write privilege indicator (w) in Dired buffers.
     (diredfl-dir-heading :inherit font-lock-comment-face :background bg-primary) ;; *Face used for directory headings in Dired buffers.
-    (diredfl-file-suffix :foreground accent-orange)                              ;; *Face used for file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.elc’.
+    (diredfl-file-suffix :foreground fg-muted)                                   ;; *Face used for file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.elc’.
     (diredfl-autofile-name :foreground accent-yellow)                            ;; *Face used in Dired for names of files that are autofile bookmarks.
     (diredfl-tagged-autofile-name :foreground accent-red)                        ;; *Face used in Dired for names of files that are autofile bookmarks.
     (diredfl-flag-mark-line :background cursor)                                  ;; *Face used for flagged and marked lines in Dired buffers.
