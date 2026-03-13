@@ -68,7 +68,8 @@
 (let ((colors
        '((bg-primary      "#222222")
          (bg-secondary    "#27282c")
-         (bg-muted        "#2f2f2f")
+         (bg-hl           "#2f2f2f")
+         (bg-selection    "#355565")
          (fg-primary      "#a6a8a9")
          (fg-secondary    "#a1a1a1")
          (fg-muted        "#747272")
@@ -89,18 +90,9 @@
          (comment         "#bda38e")))
 
       (overrides
-       '((match :foreground "white" :background bg-muted
-                :weight bold :slant i
-                :box (:line-width 1 :color border)
-                :underline (:style line :position -5))
-         (isearch-fail :background "red" :foreground "white" :inherit match)
-         (vertico-current :foreground "white" :background bg-muted
-                          :weight bold :slant o :extend t)
-         (dired-efap-face :foreground "white"
-                          :box (:line-width 2 :color border :style pressed-button))
-         (show-paren-match :foreground "white" :weight extra-bold)
-         (button :foreground "white" :weight semi-bold
-                 :underline (:color bg-muted :style double-line)))))
+       '(
+         ;; use simplified syntax
+         )))
 
   (neron-theme-create 'neron-dark colors overrides))
 
@@ -134,7 +126,8 @@
 (let ((colors
        '((bg-primary      "#ffffff")
          (bg-secondary    "#f6f6f6")
-         (bg-muted        "#fdf6df")
+         (bg-hl           "#fdf6df")
+         (bg-selection    "#c8d8f9") ; "#f3f6ff"
          (fg-primary      "#545e62")
          (fg-secondary    "#596368")
          (fg-muted        "#8c8d8d")
@@ -151,22 +144,13 @@
          (bg-diff-removed "#ffd4d4")
          (bg-diff-header  "pale turquoise")
          (border          "light gray")
-         (cursor          "#3d51c2")
+         (cursor          "#3d51c2") ; 3647aa
          (comment         "#a0a1a7")))
 
       (overrides
-       '((match :foreground "black" :background bg-muted
-                :weight bold :slant i
-                :box (:line-width 1 :color border)
-                :underline (:style line :position -5))
-         (isearch-fail :background "red" :foreground "black" :inherit match)
-         (vertico-current :foreground "black" :background bg-muted
-                          :weight bold :slant o :extend t)
-         (dired-efap-face :foreground "black"
-                          :box (:line-width 2 :color border :style pressed-button))
-         (show-paren-match :foreground "black" :weight extra-bold)
-         (button :foreground "black" :weight semi-bold
-                 :underline (:color bg-muted :style double-line)))))
+       '(
+         ;; use simplified syntax
+         )))
 
   (neron-theme-create 'neron-light colors overrides))
 
@@ -283,50 +267,99 @@
        (cons sym (list :gui gui :256 c256 :tty tty))))
    palette))
 
-(defun neron-theme--adjust-color (hex percent)
-  "Adjust HEX lightness by PERCENT. Positive lightens, negative darkens."
+(defun neron-theme--resolve-color-expr (expr color-map)
+  "Recursively resolve EXPR (symbol, hex string, or pastel list) into a GUI hex string."
+  (cond
+   ((and (stringp expr) (string-prefix-p "#" expr)) expr)
+   ((symbolp expr)
+    (let ((entry (assoc expr color-map)))
+      (and entry (plist-get (cdr entry) :gui))))
+
+   ((and (listp expr) (keywordp (car expr))
+         (memq (car expr) '(:darken :lighten :saturate :desaturate :rotate :complement :to-gray :textcolor :mix)))
+    (let* ((op (car expr))
+           (arg1 (nth 1 expr))
+           (hex1 (neron-theme--resolve-color-expr arg1 color-map)))
+      (when hex1
+        (if (eq op :mix)
+            (let* ((arg2 (nth 2 expr))
+                   (weight (nth 3 expr))
+                   (hex2 (neron-theme--resolve-color-expr arg2 color-map)))
+              (and hex2 (neron-theme--color-op hex1 :mix hex2 weight)))
+          (neron-theme--color-op hex1 op (nth 2 expr))))))
+
+   (t nil)))
+
+
+(defun neron-theme--color-op (hex op &rest args)
+  "Perform a pastel-like OP on HEX with ARGS. Returns a new hex string."
   (let* ((rgb (color-name-to-rgb hex))
          (hsl (apply #'color-rgb-to-hsl rgb))
-         (h (nth 0 hsl))
-         (s (nth 1 hsl))
-         (l (nth 2 hsl))
-         ;; Adjust lightness. We divide by 100.0 to convert percentage to 0.0-1.0 range.
-         (new-l (max 0.0 (min 1.0 (+ l (/ percent 100.0)))))
-         (new-rgb (color-hsl-to-rgb h s new-l)))
-    ;; The `2` argument ensures we get standard #RRGGBB instead of #RRRRGGGGBBBB
+         (h (nth 0 hsl)) (s (nth 1 hsl)) (l (nth 2 hsl))
+         (new-rgb
+          (pcase op
+            (:lighten
+             (color-hsl-to-rgb h s (max 0.0 (min 1.0 (+ l (/ (car args) 100.0))))))
+            (:darken
+             (color-hsl-to-rgb h s (max 0.0 (min 1.0 (- l (/ (car args) 100.0))))))
+            (:saturate
+             (color-hsl-to-rgb h (max 0.0 (min 1.0 (+ s (/ (car args) 100.0)))) l))
+            (:desaturate
+             (color-hsl-to-rgb h (max 0.0 (min 1.0 (- s (/ (car args) 100.0)))) l))
+            (:rotate
+             (color-hsl-to-rgb (mod (+ h (/ (car args) 360.0)) 1.0) s l))
+            (:complement
+             (color-hsl-to-rgb (mod (+ h 0.5) 1.0) s l))
+            (:to-gray
+             (color-hsl-to-rgb h 0.0 l))
+            (:textcolor
+             ;; Emacs built-in relative luminance check
+             (if (color-dark-p rgb) '(1.0 1.0 1.0) '(0.0 0.0 0.0)))
+            (:mix
+             ;; Linear RGB interpolation
+             (let* ((hex2 (car args))
+                    (weight (/ (or (cadr args) 50) 100.0)) ; default 50% mix
+                    (rgb2 (color-name-to-rgb hex2))
+                    (inv (- 1.0 weight)))
+               (list (+ (* (nth 0 rgb) weight) (* (nth 0 rgb2) inv))
+                     (+ (* (nth 1 rgb) weight) (* (nth 1 rgb2) inv))
+                     (+ (* (nth 2 rgb) weight) (* (nth 2 rgb2) inv))))))))
+    ;; Convert back to standard #RRGGBB
     (color-rgb-to-hex (nth 0 new-rgb) (nth 1 new-rgb) (nth 2 new-rgb) 2)))
 
-;;; nested recursive property resolver
 (defun neron-theme--resolve (attrs display-key color-map)
-  "Recursively resolve ATTRS for a DISPLAY-KEY (`:gui', `:256', or `:tty') using COLOR-MAP.
-
-Safely drills down into nested properties like :box or :underline."
+  "Resolve face ATTRS plist for DISPLAY-KEY (:gui, :256, or :tty) using COLOR-MAP.
+Palette symbols are replaced with their display-specific color values.
+DSL expressions like (:darken sym 10) are evaluated recursively.
+Nested properties (:box, :underline, etc.) are resolved in-place."
   (let (result rest)
     (setq rest attrs)
     (while rest
-      (let ((key (pop rest)) (val (pop rest)))
+      (let* ((orig-key (pop rest))
+             ;; aliases
+             (key (pcase orig-key
+                    (:bg :background)
+                    (:fg :foreground)
+                    (_ orig-key)))
+             (val (pop rest)))
         (push key result)
         (cond
          ((eq key :inherit) (push val result))
 
-         ;; Dynamic Color Modifiers DSL `(:darken color-sym percent)'
-         ((and (listp val) (memq (car val) '(:darken :lighten)))
-          (let* ((op (car val))
-                 (color-sym (nth 1 val))
-                 (percent (nth 2 val))
-                 (base-entry (assoc color-sym color-map))
-                 (base-hex (and base-entry (plist-get (cdr base-entry) :gui))))
-            (if (not base-hex)
-                (push color-sym result) ;; Fallback if symbol is missing
-              ;; Calculate new hex: invert percent if darkening
-              (let* ((adj-percent (if (eq op :darken) (- percent) percent))
-                     (new-hex (neron-theme--adjust-color base-hex adj-percent)))
-                ;; Dynamically calculate terminal fallbacks for the NEW hex!
-                (push (cond
-                       ((eq display-key :gui) new-hex)
-                       ((eq display-key :256) (neron-theme--hex-to-xterm-name new-hex))
-                       ((eq display-key :tty) (neron-theme--nearest-basic16 new-hex)))
-                      result)))))
+         ;; Color modifiers DSL with recursive nesting
+         ((and (listp val) (keywordp (car val))
+               (memq (car val) '(:darken :lighten :saturate :desaturate
+                                         :rotate :complement :to-gray :textcolor :mix)))
+          ;; Pass entire expression to recursive resolver
+          (let ((new-hex (neron-theme--resolve-color-expr val color-map)))
+            (if (not new-hex)
+                (push val result) ;; Graceful fallback if completely unresolved
+              ;; Auto-calculate terminal fallbacks for the final mutated color
+              (push (cond
+                     ((eq display-key :gui) new-hex)
+                     ((eq display-key :256) (neron-theme--hex-to-xterm-name new-hex))
+                     ((eq display-key :tty) (neron-theme--nearest-basic16 new-hex)))
+                    result))))
          ((and (listp val) (cl-some (lambda (k) (memq k '(:gui :256 :tty))) val))
           (push (or (plist-get val display-key)
                     (and (eq display-key :256) (plist-get val :gui))
@@ -350,8 +383,8 @@ Safely drills down into nested properties like :box or :underline."
 (defconst neron-theme--base-faces
   '((default :foreground fg-primary :background bg-primary)
     (cursor :background cursor)
-    (region :background bg-muted :extend t :distant-foreground fg-primary)
-    (highlight :background bg-muted :weight bold)
+    (region :background bg-selection :extend t :distant-foreground fg-primary)
+    (highlight :background bg-hl :weight bold)
     (error :foreground accent-red :weight bold)
     (warning :foreground accent-warning :weight bold :slant o)
     (success :foreground accent-green :weight bold)
@@ -429,21 +462,20 @@ Safely drills down into nested properties like :box or :underline."
     (shadow :foreground fg-muted)
 
     ;; SEARCH & SELECTION
-    (match :foreground "white" :background bg-muted
+    (match :foreground (:textcolor bg-primary) :background bg-hl
            :weight bold :slant i
            :box (:line-width 1 :color border)
            :underline (:style line :position -5))
     (isearch :inherit match)
-    (isearch-fail :background "red" :foreground "white" :inherit match)
+    (isearch-fail :background "red" :foreground (:textcolor bg-primary) :inherit match)
     (lazy-highlight :foreground fg-primary :inherit match)
 
     ;; COMPLETION & NAVIGATION
-    (vertico-current
-     :background bg-muted
-     :foreground "white"
-     :weight bold
-     :slant o
-     :extend t)
+    (vertico-current :foreground (:textcolor bg-primary)
+                     :background bg-hl
+                     :weight bold
+                     :slant o
+                     :extend t)
 
     (corfu-default :background bg-secondary)
     (corfu-current :inherit vertico-current)
@@ -523,13 +555,13 @@ Safely drills down into nested properties like :box or :underline."
     (diredfl-file-suffix :foreground fg-muted)                                   ;; *Face used for file suffixes in Dired buffers. This means the ‘.’ plus the file extension.  Example: ‘.elc’.
     (diredfl-autofile-name :foreground accent-yellow)                            ;; *Face used in Dired for names of files that are autofile bookmarks.
     (diredfl-tagged-autofile-name :foreground accent-red)                        ;; *Face used in Dired for names of files that are autofile bookmarks.
-    (diredfl-flag-mark-line :background cursor)                                  ;; *Face used for flagged and marked lines in Dired buffers.
+    (diredfl-flag-mark-line :foreground (:textcolor bg-selection) :background bg-selection)           ;; *Face used for flagged and marked lines in Dired buffers.
     (diredfl-flag-mark :inherit diredfl-flag-mark-line)                          ;; *Face used for flags and marks (except D) in Dired buffers.
     (diredfl-ignored-file-name :foreground fg-muted :slant i)                    ;; *Face used for ignored file names  in Dired buffers.
     (diredfl-deletion-file-name :background accent-red :foreground bg-primary)   ;; *Face used for names of deleted files in Dired buffers.
     (diredfl-deletion :inherit diredfl-deletion-file-name)                       ;; *Face used for deletion flags (D) in Dired buffers.
 
-    (dired-efap-face :foreground "white" :box (:line-width 2 :color border :style pressed-button))
+    (dired-efap-face :foreground (:textcolor bg-primary) :box (:line-width 2 :color border :style pressed-button))
 
     (dired-subtree-depth-1-face :background (:darken bg-primary 5))
     (dired-subtree-depth-2-face :background (:darken bg-primary 10))
@@ -549,7 +581,7 @@ Safely drills down into nested properties like :box or :underline."
     (diff-indicator-removed :inherit diff-removed :foreground accent-red)
 
     (magit-section-highlight :background bg-secondary :extend t)
-    (magit-diff-context-highlight :background bg-muted :extend t)
+    (magit-diff-context-highlight :background bg-hl :extend t)
     (magit-diff-hunk-heading :background border :extend t)
     (magit-diff-added :background bg-diff-added :extend t)
     (magit-diff-removed :background bg-diff-removed :extend t)
@@ -586,7 +618,7 @@ Safely drills down into nested properties like :box or :underline."
     ;; MISC
     (link :foreground fg-primary :underline t :weight bold)
     (link-visited :foreground accent-purple :underline t)
-    (button :foreground "white" :weight semi-bold :underline (:color bg-muted :style double-line))
+    (button :foreground (:textcolor bg-primary) :weight semi-bold :underline (:color bg-hl :style double-line))
     (trailing-whitespace :background accent-red)
     (whitespace-tab :background "#330022")
 
@@ -629,7 +661,7 @@ Safely drills down into nested properties like :box or :underline."
     (sh-quoted-exec :foreground accent-red)
     (ansible-task-label-face :foreground accent-green)
     (flycheck-error :underline (:style wave :color accent-magenta))
-    (show-paren-match :foreground "white" :weight extra-bold)
+    (show-paren-match :foreground (:textcolor bg-primary) :weight extra-bold)
     (fill-column-indicator :foreground border)
     (highlight-indent-guides-even-face :foreground border :background border)
     (highlight-indent-guides-odd-face :foreground border :background border)

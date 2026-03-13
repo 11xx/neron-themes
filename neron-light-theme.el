@@ -17,7 +17,8 @@
 (let ((colors
        '((bg-primary      "#ffffff")
          (bg-secondary    "#f6f6f6")
-         (bg-muted        "#fdf6df")
+         (bg-hl           "#fdf6df")
+         (bg-selection    "#c8d8f9") ; "#f3f6ff"
          (fg-primary      "#545e62")
          (fg-secondary    "#596368")
          (fg-muted        "#8c8d8d")
@@ -34,22 +35,13 @@
          (bg-diff-removed "#ffd4d4")
          (bg-diff-header  "pale turquoise")
          (border          "light gray")
-         (cursor          "#3d51c2")
+         (cursor          "#3d51c2") ; 3647aa
          (comment         "#a0a1a7")))
 
       (overrides
-       '((match :foreground "black" :background bg-muted
-                :weight bold :slant i
-                :box (:line-width 1 :color border)
-                :underline (:style line :position -5))
-         (isearch-fail :background "red" :foreground "black" :inherit match)
-         (vertico-current :foreground "black" :background bg-muted
-                          :weight bold :slant o :extend t)
-         (dired-efap-face :foreground "black"
-                          :box (:line-width 2 :color border :style pressed-button))
-         (show-paren-match :foreground "black" :weight extra-bold)
-         (button :foreground "black" :weight semi-bold
-                 :underline (:color bg-muted :style double-line)))))
+       '(
+         ;; use simplified syntax
+         )))
 
   (neron-theme-create 'neron-light colors overrides))
 

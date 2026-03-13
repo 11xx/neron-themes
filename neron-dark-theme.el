@@ -18,7 +18,8 @@
 (let ((colors
        '((bg-primary      "#222222")
          (bg-secondary    "#27282c")
-         (bg-muted        "#2f2f2f")
+         (bg-hl           "#2f2f2f")
+         (bg-selection    "#355565")
          (fg-primary      "#a6a8a9")
          (fg-secondary    "#a1a1a1")
          (fg-muted        "#747272")
@@ -39,18 +40,9 @@
          (comment         "#bda38e")))
 
       (overrides
-       '((match :foreground "white" :background bg-muted
-                :weight bold :slant i
-                :box (:line-width 1 :color border)
-                :underline (:style line :position -5))
-         (isearch-fail :background "red" :foreground "white" :inherit match)
-         (vertico-current :foreground "white" :background bg-muted
-                          :weight bold :slant o :extend t)
-         (dired-efap-face :foreground "white"
-                          :box (:line-width 2 :color border :style pressed-button))
-         (show-paren-match :foreground "white" :weight extra-bold)
-         (button :foreground "white" :weight semi-bold
-                 :underline (:color bg-muted :style double-line)))))
+       '(
+         ;; use simplified syntax
+         )))
 
   (neron-theme-create 'neron-dark colors overrides))
 
