@@ -413,7 +413,7 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
 
     ;; Custom menu
     (custom-button :inherit highlight :box (:line-width 2 :style released-button))
-    (custom-button-mouse :inherit custom-button-mouse)
+    (custom-button-mouse :inherit custom-button)
     (custom-button-pressed :inherit custom-buttom :box (:line-width 2 :style pressed-button))
     (widget-field :underline t)
 
@@ -620,8 +620,8 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
     ;; MISC
     (link :foreground fg-primary :underline t :weight bold)
     (link-visited :foreground accent-purple :underline t)
-    (button :foreground (:textcolor bg-primary) :weight semi-bold :underline (:color bg-hl :style double-line))
     (trailing-whitespace :background accent-red)
+    (button :inherit link)
 
     ;;; ANSI TERMINAL
     (ansi-color-black :foreground bg-secondary)

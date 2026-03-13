@@ -79,7 +79,8 @@ pass them to =(neron-theme-create)=:
 (let ((my-colors
        '((bg-primary      "#222222")
          (bg-secondary    "#27282c")
-         (bg-muted        "#2f2f2f")
+         (bg-hl           "#2f2f2f")
+         (bg-selection    "#355565")
          (fg-primary      "#a6a8a9")
          (fg-secondary    "#cccccc")
          (fg-muted        "#707070")
