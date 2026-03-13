@@ -453,7 +453,6 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
     (link-visited :foreground accent-purple :underline t)
     (button :foreground (:textcolor bg-primary) :weight semi-bold :underline (:color bg-hl :style double-line))
     (trailing-whitespace :background accent-red)
-    (whitespace-tab :background "#330022")
 
     ;;; ANSI TERMINAL
     (ansi-color-black :foreground bg-secondary)

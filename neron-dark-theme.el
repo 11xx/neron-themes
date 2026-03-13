@@ -41,7 +41,8 @@
 
       (overrides
        '(
-         ;; use simplified syntax
+         ;; simplified syntax
+         (whitespace-tab :background "#330022")
          )))
 
   (neron-theme-create 'neron-dark colors overrides))
