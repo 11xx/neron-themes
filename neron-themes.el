@@ -1,8 +1,8 @@
 ;;; neron-themes.el --- Pair of colorful light/dark neon-pastel themes -*- lexical-binding: t; -*-
 
-;; Author: Lucas G <g@11xx.org>
-;; Version: 20260307
-;; Package-Requires: ((emacs "28"))
+;; Author: 11xx
+;; Version: 2026.4.13
+;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: faces, theme, dark, light
 ;; URL: https://codeberg.org/11xx/neron-themes
 ;; SPDX-License-Identifier: Unlicense
@@ -19,10 +19,10 @@
 
 ;;; Code:
 
-(defgroup neron-theme nil
-  "neron-theme options."
-  ;; todo maybe
-  :group 'faces)
+;; (defgroup neron-themes nil
+;;   "neron-theme options."
+;;   ;; todo maybe
+;;   :group 'faces)
 
 ;;;###autoload
 (when load-file-name

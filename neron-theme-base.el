@@ -1,5 +1,11 @@
 ;;; neron-theme-base.el --- Shared engine for Neron themes -*- lexical-binding: t; -*-
 
+;; Author: 11xx
+;; Version: 2026.4.13
+;; Package-Requires: ((emacs "27.1"))
+;; Keywords: faces, theme, dark, light
+;; URL: https://codeberg.org/11xx/neron-themes
+
 ;; URL: https://codeberg.org/11xx/neron-themes
 
 ;;; Commentary:
@@ -250,19 +256,33 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
 
     ;; SYNTAX HIGHLIGHTING
     ;; Font-lock hierarchy provides base syntax coloring
+    (font-lock-bracket-face :inherit default)
     (font-lock-builtin-face :foreground accent-magenta)
     (font-lock-comment-delimiter-face :inherit font-lock-comment-face)
     (font-lock-comment-face :foreground comment :slant italic)
     (font-lock-constant-face :foreground accent-blue)
+    (font-lock-delimiter-face :inherit font-lock-keyword-face)
     (font-lock-doc-face :foreground accent-blue)
     (font-lock-doc-markup-face :foreground accent-purple)
+    (font-lock-escape-face :inherit font-lock-string-face)
+    (font-lock-function-call-face :inherit font-lock-function-name-face)
     (font-lock-function-name-face :foreground accent-green :weight semi-bold)
     (font-lock-keyword-face :foreground accent-magenta)
+    (font-lock-misc-punctuation-face :inherit font-lock-punctuation-face)
     (font-lock-negation-char-face :foreground accent-orange :weight bold)
+    (font-lock-number-face :inherit font-lock-constant-face)
+    (font-lock-operator-face :inherit font-lock-keyword-face)
     (font-lock-preprocessor-face :inherit font-lock-builtin-face)
+    (font-lock-property-name-face :inherit font-lock-variable-name-face)
+    (font-lock-property-use-face :inherit font-lock-property-name-face)
+    (font-lock-punctuation-face :inherit font-lock-delimiter-face)
+    (font-lock-regexp-face :inherit font-lock-string-face)
+    (font-lock-regexp-grouping-backslash :inherit font-lock-regexp-face)
+    (font-lock-regexp-grouping-construct :inherit font-lock-regexp-face)
     (font-lock-string-face :foreground accent-purple)
     (font-lock-type-face :foreground accent-cyan)
     (font-lock-variable-name-face :foreground accent-yellow :weight semi-bold)
+    (font-lock-variable-use-face :inherit font-lock-variable-name-face)
     (font-lock-warning-face :inherit warning)
 
     (tree-sitter-hl-face:attribute :inherit font-lock-constant-face)
@@ -522,4 +542,4 @@ Automatically calculates terminal fallbacks for PALETTE and merges OVERRIDES int
                    merged-faces))))
 
 (provide 'neron-theme-base)
-;;; neron-theme-generator.el ends here
+;;; neron-theme-base.el ends here

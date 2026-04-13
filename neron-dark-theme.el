@@ -1,5 +1,11 @@
 ;;; neron-dark-theme.el --- Neron Dark Theme -*- lexical-binding: t; -*-
 
+;; Author: 11xx
+;; Version: 2026.4.13
+;; Package-Requires: ((emacs "27.1"))
+;; Keywords: faces, theme, dark, light
+;; URL: https://codeberg.org/11xx/neron-themes
+
 ;;; Commentary:
 ;;
 ;; A dark theme with colorful neon-pastel accents.
@@ -40,8 +46,7 @@
          (comment         "#bda38e")))
 
       (overrides
-       '(
-         ;; simplified syntax
+       '(;; simplified syntax
          (whitespace-tab :background "#330022")
          )))
 

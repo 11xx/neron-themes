@@ -1,5 +1,11 @@
 ;;; neron-light-theme.el --- Neron Light Theme -*- lexical-binding: t; -*-
 
+;; Author: 11xx
+;; Version: 2026.4.13
+;; Package-Requires: ((emacs "27.1"))
+;; Keywords: faces, theme, dark, light
+;; URL: https://codeberg.org/11xx/neron-themes
+
 ;;; Commentary:
 ;;
 ;; A light theme derived from `neron-dark', inspired by Gnome Adwaita.
@@ -39,8 +45,7 @@
          (comment         "#a0a1a7")))
 
       (overrides
-       '(
-         ;; simplified syntax
+       '(;; simplified syntax
          (whitespace-tab :background "#ffeeff")
          )))
 
