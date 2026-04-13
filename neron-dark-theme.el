@@ -2,7 +2,7 @@
 
 ;; Author: 11xx
 ;; Version: 2026.4.13
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: faces, theme, dark, light
 ;; URL: https://codeberg.org/11xx/neron-themes
 
@@ -50,7 +50,7 @@
          (whitespace-tab :background "#330022")
          )))
 
-  (neron-theme-create 'neron-dark colors overrides))
+  (neron-theme-base-create 'neron-dark colors overrides))
 
 (provide-theme 'neron-dark)
 ;;; neron-dark-theme.el ends here

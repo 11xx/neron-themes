@@ -2,7 +2,7 @@
 
 ;; Author: 11xx
 ;; Version: 2026.4.13
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: faces, theme, dark, light
 ;; URL: https://codeberg.org/11xx/neron-themes
 
@@ -21,10 +21,10 @@
 (require 'cl-lib)
 (require 'color)
 
-(defconst neron-theme--xterm-6cube-levels [0 95 135 175 215 255]
+(defconst neron-theme-base--xterm-6cube-levels [0 95 135 175 215 255]
   "Core Color Math (Calculates 256-color and TTY fallbacks dynamically)")
 
-(defconst neron-theme--basic16
+(defconst neron-theme-base--basic16
   '(("black"   . "#000000")
     ("red"     . "#cd0000")
     ("green"   . "#00cd00")
@@ -43,54 +43,54 @@
     ("brightwhite" . "#ffffff"))
   "Default TTY colors shared by all themes.")
 
-(defun neron-theme--sq-dist (a b)
+(defun neron-theme-base--sq-dist (a b)
   "Calculate the squared Euclidean distance between RGB lists A and B."
   (let ((dr (- (nth 0 a) (nth 0 b)))
         (dg (- (nth 1 a) (nth 1 b)))
         (db (- (nth 2 a) (nth 2 b))))
     (+ (* dr dr) (* dg dg) (* db db))))
 
-(defun neron-theme--hex-to-rgb (hex)
+(defun neron-theme-base--hex-to-rgb (hex)
   "Parse a #RRGGBB string into a list of integers (R G B)."
   (let ((h (replace-regexp-in-string "^#" "" hex)))
     (list (string-to-number (substring h 0 2) 16)
           (string-to-number (substring h 2 4) 16)
           (string-to-number (substring h 4 6) 16))))
 
-(defun neron-theme--rgb-to-xterm-index (r g b)
+(defun neron-theme-base--rgb-to-xterm-index (r g b)
   "Find the nearest xterm-256 color index for the given R G B values."
   (let ((best-idx nil) (best-d most-positive-fixnum))
     (dotimes (rr 6)
       (dotimes (gg 6)
         (dotimes (bb 6)
-          (let* ((cr (aref neron-theme--xterm-6cube-levels rr))
-                 (cg (aref neron-theme--xterm-6cube-levels gg))
-                 (cb (aref neron-theme--xterm-6cube-levels bb))
+          (let* ((cr (aref neron-theme-base--xterm-6cube-levels rr))
+                 (cg (aref neron-theme-base--xterm-6cube-levels gg))
+                 (cb (aref neron-theme-base--xterm-6cube-levels bb))
                  (idx (+ 16 (* 36 rr) (* 6 gg) bb))
-                 (d (neron-theme--sq-dist (list r g b) (list cr cg cb))))
+                 (d (neron-theme-base--sq-dist (list r g b) (list cr cg cb))))
             (when (< d best-d)
               (setq best-d d best-idx idx))))))
     (let ((gval (round (/ (+ r g b) 3.0))))
       (dotimes (k 24)
         (let* ((level (+ 8 (* k 10))) (idx (+ 232 k))
-               (d (neron-theme--sq-dist (list gval gval gval) (list level level level))))
+               (d (neron-theme-base--sq-dist (list gval gval gval) (list level level level))))
           (when (< d best-d)
             (setq best-d d best-idx idx)))))
     best-idx))
 
-(defun neron-theme--hex-to-xterm-name (hex)
+(defun neron-theme-base--hex-to-xterm-name (hex)
   "Convert a #RRGGBB hex string to an Emacs 256-color name (e.g., \"color196\")."
-  (format "color%d" (apply #'neron-theme--rgb-to-xterm-index (neron-theme--hex-to-rgb hex))))
+  (format "color%d" (apply #'neron-theme-base--rgb-to-xterm-index (neron-theme-base--hex-to-rgb hex))))
 
-(defun neron-theme--nearest-basic16 (hex)
+(defun neron-theme-base--nearest-basic16 (hex)
   "Find the closest standard 16-color terminal name for a given HEX string."
-  (let ((rgb (neron-theme--hex-to-rgb hex)) (best nil) (best-d most-positive-fixnum))
-    (dolist (entry neron-theme--basic16 best)
-      (let ((d (neron-theme--sq-dist rgb (neron-theme--hex-to-rgb (cdr entry)))))
+  (let ((rgb (neron-theme-base--hex-to-rgb hex)) (best nil) (best-d most-positive-fixnum))
+    (dolist (entry neron-theme-base--basic16 best)
+      (let ((d (neron-theme-base--sq-dist rgb (neron-theme-base--hex-to-rgb (cdr entry)))))
         (when (< d best-d)
           (setq best-d d best (car entry)))))))
 
-(defun neron-theme--build-color-map (palette)
+(defun neron-theme-base--build-color-map (palette)
   "Transform a flat PALETTE into an alist mapping symbols to display-specific plists (:gui, :256, :tty)."
   (mapcar
    (lambda (entry)
@@ -98,15 +98,15 @@
             (gui (and (stringp gui) (not (string= gui "unspecified")) gui))
             (c256 (cond
                    ((and (stringp alt256) (string-prefix-p "#" alt256))
-                    (neron-theme--hex-to-xterm-name alt256))
+                    (neron-theme-base--hex-to-xterm-name alt256))
                    ((and (stringp alt256) (not (member alt256 '("unspecified" "nil")))) alt256)
-                   (gui (neron-theme--hex-to-xterm-name gui))
+                   (gui (neron-theme-base--hex-to-xterm-name gui))
                    (t nil)))
-            (tty (if gui (neron-theme--nearest-basic16 gui) "white")))
+            (tty (if gui (neron-theme-base--nearest-basic16 gui) "white")))
        (cons sym (list :gui gui :256 c256 :tty tty))))
    palette))
 
-(defun neron-theme--resolve-color-expr (expr color-map)
+(defun neron-theme-base--resolve-color-expr (expr color-map)
   "Recursively resolve EXPR (symbol, hex string, or pastel list) into a GUI hex string."
   (cond
    ((and (stringp expr) (string-prefix-p "#" expr)) expr)
@@ -118,19 +118,19 @@
          (memq (car expr) '(:darken :lighten :saturate :desaturate :rotate :complement :to-gray :textcolor :mix)))
     (let* ((op (car expr))
            (arg1 (nth 1 expr))
-           (hex1 (neron-theme--resolve-color-expr arg1 color-map)))
+           (hex1 (neron-theme-base--resolve-color-expr arg1 color-map)))
       (when hex1
         (if (eq op :mix)
             (let* ((arg2 (nth 2 expr))
                    (weight (nth 3 expr))
-                   (hex2 (neron-theme--resolve-color-expr arg2 color-map)))
-              (and hex2 (neron-theme--color-op hex1 :mix hex2 weight)))
-          (neron-theme--color-op hex1 op (nth 2 expr))))))
+                   (hex2 (neron-theme-base--resolve-color-expr arg2 color-map)))
+              (and hex2 (neron-theme-base--color-op hex1 :mix hex2 weight)))
+          (neron-theme-base--color-op hex1 op (nth 2 expr))))))
 
    (t nil)))
 
 
-(defun neron-theme--color-op (hex op &rest args)
+(defun neron-theme-base--color-op (hex op &rest args)
   "Perform a pastel-like OP on HEX with ARGS. Returns a new hex string."
   (let* ((rgb (color-name-to-rgb hex))
          (hsl (apply #'color-rgb-to-hsl rgb))
@@ -166,7 +166,7 @@
     ;; Convert back to standard #RRGGBB
     (color-rgb-to-hex (nth 0 new-rgb) (nth 1 new-rgb) (nth 2 new-rgb) 2)))
 
-(defun neron-theme--resolve (attrs display-key color-map)
+(defun neron-theme-base--resolve (attrs display-key color-map)
   "Resolve face ATTRS plist for DISPLAY-KEY (:gui, :256, or :tty) using COLOR-MAP.
 Palette symbols are replaced with their display-specific color values.
 DSL expressions like (:darken sym 10) are evaluated recursively.
@@ -190,14 +190,14 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
                (memq (car val) '(:darken :lighten :saturate :desaturate
                                          :rotate :complement :to-gray :textcolor :mix)))
           ;; Pass entire expression to recursive resolver
-          (let ((new-hex (neron-theme--resolve-color-expr val color-map)))
+          (let ((new-hex (neron-theme-base--resolve-color-expr val color-map)))
             (if (not new-hex)
                 (push val result) ;; Graceful fallback if completely unresolved
               ;; Auto-calculate terminal fallbacks for the final mutated color
               (push (cond
                      ((eq display-key :gui) new-hex)
-                     ((eq display-key :256) (neron-theme--hex-to-xterm-name new-hex))
-                     ((eq display-key :tty) (neron-theme--nearest-basic16 new-hex)))
+                     ((eq display-key :256) (neron-theme-base--hex-to-xterm-name new-hex))
+                     ((eq display-key :tty) (neron-theme-base--nearest-basic16 new-hex)))
                     result))))
          ((and (listp val) (cl-some (lambda (k) (memq k '(:gui :256 :tty))) val))
           (push (or (plist-get val display-key)
@@ -208,18 +208,18 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
           (let ((entry (assoc val color-map)))
             (push (if entry (plist-get (cdr entry) display-key) val) result)))
          ((and (listp val) (memq key '(:box :underline :overline :strike-through)))
-          (push (neron-theme--resolve val display-key color-map) result))
+          (push (neron-theme-base--resolve val display-key color-map) result))
          (t (push val result)))))
     (nreverse result)))
 
-(defun neron-theme--merge-faces (base overrides)
+(defun neron-theme-base--merge-faces (base overrides)
   "Return a new alist combining BASE faces with OVERRIDES. Overrides take precedence."
   (let ((result (copy-alist base)))
     (dolist (ov overrides)
       (setf (alist-get (car ov) result nil #'eq) (cdr ov)))
     result))
 
-(defconst neron-theme--base-faces
+(defconst neron-theme-base--base-faces
   '((default :foreground fg-primary :background bg-primary)
     (cursor :background cursor)
     (region :background bg-selection :extend t :distant-foreground fg-primary)
@@ -525,20 +525,20 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
     )
   "Return alist of base face specifications (shorthand plist style).")
 
-(defun neron-theme-create (theme-name palette overrides)
+(defun neron-theme-base-create (theme-name palette overrides)
   "Generate and apply custom-theme-set-faces for THEME-NAME.
 
 Automatically calculates terminal fallbacks for PALETTE and merges OVERRIDES into the base faces."
-  (let ((color-map (neron-theme--build-color-map palette))
-        (merged-faces (neron-theme--merge-faces neron-theme--base-faces overrides)))
+  (let ((color-map (neron-theme-base--build-color-map palette))
+        (merged-faces (neron-theme-base--merge-faces neron-theme-base--base-faces overrides)))
     (apply #'custom-theme-set-faces theme-name
            (mapcar (lambda (face-spec)
                      (let ((face  (car face-spec))
                            (attrs (cdr face-spec)))
                        `(,face
-                         ((((min-colors 16777216)) ,(neron-theme--resolve attrs :gui color-map))
-                          (((min-colors 256))      ,(neron-theme--resolve attrs :256 color-map))
-                          (t                       ,(neron-theme--resolve attrs :tty color-map))))))
+                         ((((min-colors 16777216)) ,(neron-theme-base--resolve attrs :gui color-map))
+                          (((min-colors 256))      ,(neron-theme-base--resolve attrs :256 color-map))
+                          (t                       ,(neron-theme-base--resolve attrs :tty color-map))))))
                    merged-faces))))
 
 (provide 'neron-theme-base)
