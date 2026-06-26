@@ -6,8 +6,6 @@
 ;; Keywords: faces, theme, dark, light
 ;; URL: https://codeberg.org/11xx/neron-themes
 
-;; URL: https://codeberg.org/11xx/neron-themes
-
 ;;; Commentary:
 ;;
 ;; Core engine for Neron themes.
@@ -260,7 +258,7 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
     ;; Custom menu
     (custom-button :inherit highlight :box (:line-width 2 :style released-button))
     (custom-button-mouse :inherit custom-button)
-    (custom-button-pressed :inherit custom-buttom :box (:line-width 2 :style pressed-button))
+    (custom-button-pressed :inherit custom-button :box (:line-width 2 :style pressed-button))
     (widget-field :underline t)
 
     ;; SYNTAX HIGHLIGHTING
