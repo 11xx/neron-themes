@@ -48,6 +48,18 @@
       (overrides
        '(;; simplified syntax
          (whitespace-tab :background "#330022")
+
+         ;; Keep the selection clearly visible at every color depth. On
+         ;; truecolor terminals the GUI teal is used as-is; the automatic
+         ;; 256/16 degradation of `bg-selection' collapses to a near-invisible
+         ;; gray (and would make `distant-foreground' equal the background), so
+         ;; pin explicit, high-contrast fallbacks here. `region' also backs
+         ;; rectangle-mark-mode, so this is what restores rectangle selection
+         ;; in `emacsclient -nw' frames that lack truecolor.
+         (region :background (:gui bg-selection :256 "color24" :tty "blue")
+                 :foreground (:gui unspecified :256 unspecified :tty "brightwhite")
+                 :distant-foreground (:gui fg-primary :256 fg-primary :tty unspecified)
+                 :extend t)
          )))
 
   (neron-theme-base-create 'neron-dark colors overrides))

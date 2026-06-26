@@ -166,6 +166,25 @@
     ;; Convert back to standard #RRGGBB
     (color-rgb-to-hex (nth 0 new-rgb) (nth 1 new-rgb) (nth 2 new-rgb) 2)))
 
+(defun neron-theme-base--resolve-atom (val display-key color-map)
+  "Resolve a single VAL for DISPLAY-KEY (:gui, :256, or :tty) using COLOR-MAP.
+VAL may be a palette symbol, a color-modifier DSL expression, or a literal
+\(hex string, named color, number, `unspecified', etc.). Literals pass through
+untouched; palette symbols and DSL results are degraded to the right depth."
+  (cond
+   ((and (listp val) (keywordp (car val))
+         (memq (car val) '(:darken :lighten :saturate :desaturate
+                                   :rotate :complement :to-gray :textcolor :mix)))
+    (let ((hex (neron-theme-base--resolve-color-expr val color-map)))
+      (cond ((not hex) val)
+            ((eq display-key :gui) hex)
+            ((eq display-key :256) (neron-theme-base--hex-to-xterm-name hex))
+            ((eq display-key :tty) (neron-theme-base--nearest-basic16 hex)))))
+   ((symbolp val)
+    (let ((entry (assoc val color-map)))
+      (if entry (plist-get (cdr entry) display-key) val)))
+   (t val)))
+
 (defun neron-theme-base--resolve (attrs display-key color-map)
   "Resolve face ATTRS plist for DISPLAY-KEY (:gui, :256, or :tty) using COLOR-MAP.
 Palette symbols are replaced with their display-specific color values.
@@ -185,31 +204,21 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
         (cond
          ((eq key :inherit) (push val result))
 
-         ;; Color modifiers DSL with recursive nesting
-         ((and (listp val) (keywordp (car val))
-               (memq (car val) '(:darken :lighten :saturate :desaturate
-                                         :rotate :complement :to-gray :textcolor :mix)))
-          ;; Pass entire expression to recursive resolver
-          (let ((new-hex (neron-theme-base--resolve-color-expr val color-map)))
-            (if (not new-hex)
-                (push val result) ;; Graceful fallback if completely unresolved
-              ;; Auto-calculate terminal fallbacks for the final mutated color
-              (push (cond
-                     ((eq display-key :gui) new-hex)
-                     ((eq display-key :256) (neron-theme-base--hex-to-xterm-name new-hex))
-                     ((eq display-key :tty) (neron-theme-base--nearest-basic16 new-hex)))
-                    result))))
+         ;; Per-display override plist, e.g. (:gui bg-selection :256 "color24" :tty "blue").
+         ;; The chosen entry is itself resolved, so palette symbols and DSL
+         ;; expressions are allowed alongside literals. Missing keys fall back
+         ;; to the :gui entry so a single :gui value still degrades sensibly.
          ((and (listp val) (cl-some (lambda (k) (memq k '(:gui :256 :tty))) val))
-          (push (or (plist-get val display-key)
-                    (and (eq display-key :256) (plist-get val :gui))
-                    (and (eq display-key :tty) (or (plist-get val :tty) (plist-get val :gui))))
-                result))
-         ((symbolp val)
-          (let ((entry (assoc val color-map)))
-            (push (if entry (plist-get (cdr entry) display-key) val) result)))
+          (let ((chosen (if (plist-member val display-key)
+                            (plist-get val display-key)
+                          (plist-get val :gui))))
+            (push (neron-theme-base--resolve-atom chosen display-key color-map) result)))
+         ;; Nested attribute plists (:box, :underline, ...) recurse with the
+         ;; same machinery; resolve them before the generic atom branch.
          ((and (listp val) (memq key '(:box :underline :overline :strike-through)))
           (push (neron-theme-base--resolve val display-key color-map) result))
-         (t (push val result)))))
+         ;; Palette symbols and color-modifier DSL expressions.
+         (t (push (neron-theme-base--resolve-atom val display-key color-map) result)))))
     (nreverse result)))
 
 (defun neron-theme-base--merge-faces (base overrides)

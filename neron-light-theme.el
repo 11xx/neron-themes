@@ -47,6 +47,14 @@
       (overrides
        '(;; simplified syntax
          (whitespace-tab :background "#ffeeff")
+
+         ;; See `neron-dark-theme' for the rationale. The light selection
+         ;; (#c8d8f9) degrades to near-white on 256/16-color terminals and
+         ;; vanishes against the white background, so pin visible fallbacks.
+         (region :background (:gui bg-selection :256 "color153" :tty "blue")
+                 :foreground (:gui unspecified :256 unspecified :tty "brightwhite")
+                 :distant-foreground (:gui fg-primary :256 fg-primary :tty unspecified)
+                 :extend t)
          )))
 
   (neron-theme-base-create 'neron-light colors overrides))
