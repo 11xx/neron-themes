@@ -575,7 +575,7 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
     (org-ellipsis :foreground fg-muted)
 
     ;; DIRED
-    (dired-rainbow-directory-face        :foreground accent-blue)
+    (dired-rainbow-directory-face        :inherit diredfl-dir-name)
     (dired-rainbow-html-face             :foreground accent-magenta)
     (dired-rainbow-xml-face              :foreground accent-yellow)
     (dired-rainbow-document-face         :foreground accent-purple)
@@ -627,12 +627,12 @@ Nested properties (:box, :underline, etc.) are resolved in-place."
 
     (dired-efap-face :foreground (:textcolor bg-primary) :box (:line-width 2 :color border :style pressed-button))
 
-    (dired-subtree-depth-1-face :background (:darken bg-primary 5))
-    (dired-subtree-depth-2-face :background (:darken bg-primary 10))
-    (dired-subtree-depth-3-face :background (:darken bg-primary 15))
-    (dired-subtree-depth-4-face :background (:darken bg-primary 20))
-    (dired-subtree-depth-5-face :background (:darken bg-primary 25))
-    (dired-subtree-depth-6-face :background (:darken bg-primary 30))
+    (dired-subtree-depth-1-face :background (:darken bg-primary 2))
+    (dired-subtree-depth-2-face :background (:darken bg-primary 4))
+    (dired-subtree-depth-3-face :background (:darken bg-primary 6))
+    (dired-subtree-depth-4-face :background (:darken bg-primary 8))
+    (dired-subtree-depth-5-face :background (:darken bg-primary 10))
+    (dired-subtree-depth-6-face :background (:darken bg-primary 12))
 
     ;; VERSION CONTROL
     (diff-added :background bg-diff-added :foreground accent-green :extend t)
