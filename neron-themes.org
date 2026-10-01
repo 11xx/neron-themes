@@ -17,7 +17,7 @@
 ;; Version: <<pkg-version>>
 ;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: faces, theme, dark, light
-;; URL: https://codeberg.org/11xx/neron-themes
+;; URL: https://github.com/11xx/neron-themes
 ;; SPDX-License-Identifier: Unlicense
 
 ;;; Commentary:
@@ -59,7 +59,7 @@
 ;; Version: <<pkg-version>>
 ;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: faces, theme, dark, light
-;; URL: https://codeberg.org/11xx/neron-themes
+;; URL: https://github.com/11xx/neron-themes
 
 ;;; Commentary:
 ;;
@@ -136,7 +136,7 @@
 ;; Version: <<pkg-version>>
 ;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: faces, theme, dark, light
-;; URL: https://codeberg.org/11xx/neron-themes
+;; URL: https://github.com/11xx/neron-themes
 
 ;;; Commentary:
 ;;
@@ -208,7 +208,7 @@
 ;; Version: <<pkg-version>>
 ;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: faces, theme, dark, light
-;; URL: https://codeberg.org/11xx/neron-themes
+;; URL: https://github.com/11xx/neron-themes
 
 ;;; Commentary:
 ;;

@@ -4,7 +4,7 @@
 ;; Version: 2026.4.13
 ;; Package-Requires: ((emacs "28.1"))
 ;; Keywords: faces, theme, dark, light
-;; URL: https://codeberg.org/11xx/neron-themes
+;; URL: https://github.com/11xx/neron-themes
 ;; SPDX-License-Identifier: Unlicense
 
 ;;; Commentary:
